@@ -1,0 +1,25 @@
+text,intent
+I forgot my password,account
+I cannot login to my account,account
+How do I reset my password,account
+I cannot access my account,account
+My account is locked,account
+I need help logging in,account
+My payment failed,payment
+My card payment was declined,payment
+Why did my payment fail,payment
+I was charged twice for the same payment,payment
+The transaction did not go through,payment
+My payment is pending,payment
+I want a refund,refund
+How can I get my money back,refund
+I need to cancel and get a refund,refund
+Please process my refund,refund
+I was charged and want my money back,refund
+Can I get a refund for my purchase,refund
+The application keeps crashing,technical
+The website shows an error,technical
+The app is not working,technical
+I am getting an error message,technical
+The application stopped working,technical
+There is a technical problem with the website,technical
