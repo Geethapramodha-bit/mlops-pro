@@ -1,18 +1,16 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from app.services.intent_classifier import IntentClassifier
+from app.agents.intent_agent import intent_agent
+from app.services.conversation_logger import log_conversation
 
 
 app = FastAPI(title="Agentic RAG MLOps")
 
 
-# Load the trained intent classifier
-intent_classifier = IntentClassifier()
-
-
-class IntentRequest(BaseModel):
+class ChatRequest(BaseModel):
     text: str
+    feedback: int = 0
 
 
 @app.get("/")
@@ -29,14 +27,27 @@ def health_check():
     }
 
 
-@app.post("/predict-intent")
-def predict_intent(request: IntentRequest):
+@app.post("/chat")
+def chat(request: ChatRequest):
 
-    intent = intent_classifier.predict(
-        request.text
+    result = intent_agent.invoke({
+        "text": request.text,
+        "intent": "",
+        "route": "",
+        "context": [],
+        "response": ""
+    })
+
+    log_conversation(
+        user_query=request.text,
+        intent=result["intent"],
+        response=result["response"],
+        feedback=request.feedback
     )
 
     return {
         "text": request.text,
-        "intent": intent
+        "intent": result["intent"],
+        "route": result["route"],
+        "response": result["response"]
     }
