@@ -1,11 +1,20 @@
-from app.services.conversation_logger import log_conversation
+from app.services.conversation_logger import (
+    log_conversation,
+    update_feedback
+)
 
 
-log_conversation(
-    user_query="I forgot my password",
-    intent="account",
-    response="You can reset your password using the Forgot Password option.",
+conversation_id = log_conversation(
+    user_query="Can I get a refund?",
+    intent="refund",
+    response="Please provide your order or transaction details."
+)
+
+print("Created conversation:", conversation_id)
+
+update_feedback(
+    conversation_id=conversation_id,
     feedback=1
 )
 
-print("Conversation logged successfully!")
+print("Feedback updated successfully!")
