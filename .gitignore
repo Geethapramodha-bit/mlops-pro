@@ -8,3 +8,4 @@ mlflow.db
 models/*.pkl
 
 data/processed/
+data/external/

@@ -1,0 +1,587 @@
+Source: gradio-app/gradio/blob/main/guides/08_gradio-clients-and-lite/gradio-and-llm-agents.md
+URL: https://github.com/gradio-app/gradio/blob/main/guides/08_gradio-clients-and-lite/gradio-and-llm-agents.md
+
+Gradio & LLM Agents 🤝
+
+Large Language Models (LLMs) are very impressive but they can be made even more powerful if we could give them skills to accomplish specialized tasks.
+
+The [gradio_tools](https://github.com/freddyaboulton/gradio-tools) library can turn any [Gradio](https://github.com/gradio-app/gradio) application into a [tool](https://python.langchain.com/en/latest/modules/agents/tools.html) that an [agent](https://docs.langchain.com/docs/components/agents/agent) can use to complete its task. For example, an LLM could use a Gradio tool to transcribe a voice recording it finds online and then summarize it for you. Or it could use a different Gradio tool to apply OCR to a document on your Google Drive and then answer questions about it.
+
+This guide will show how you can use `gradio_tools` to grant your LLM Agent access to the cutting edge Gradio applications hosted in the world. Although `gradio_tools` are compatible with more than one agent framework, we will focus on [Langchain Agents](https://docs.langchain.com/docs/components/agents/) in this guide.
+
+## Some background
+
+### What are agents?
+
+A [LangChain agent](https://docs.langchain.com/docs/components/agents/agent) is a Large Language Model (LLM) that takes user input and reports an output based on using one of many tools at its disposal.
+
+### What is Gradio?
+
+[Gradio](https://github.com/gradio-app/gradio) is the defacto standard framework for building Machine Learning Web Applications and sharing them with the world - all with just python! 🐍
+
+## gradio_tools - An end-to-end example
+
+To get started with `gradio_tools`, all you need to do is import and initialize your tools and pass them to the langchain agent!
+
+In the following example, we import the `StableDiffusionPromptGeneratorTool` to create a good prompt for stable diffusion, the
+`StableDiffusionTool` to create an image with our improved prompt, the `ImageCaptioningTool` to caption the generated image, and
+the `TextToVideoTool` to create a video from a prompt.
+
+We then tell our agent to create an image of a dog riding a skateboard, but to please improve our prompt ahead of time. We also ask
+it to caption the generated image and create a video for it. The agent can decide which tool to use without us explicitly telling it.
+
+```python
+import os
+
+if not os.getenv("OPENAI_API_KEY"):
+    raise ValueError("OPENAI_API_KEY must be set")
+
+from langchain.agents import initialize_agent
+from langchain.llms import OpenAI
+from gradio_tools import (StableDiffusionTool, ImageCaptioningTool, StableDiffusionPromptGeneratorTool,
+                          TextToVideoTool)
+
+from langchain.memory import ConversationBufferMemory
+
+llm = OpenAI(temperature=0)
+memory = ConversationBufferMemory(memory_key="chat_history")
+tools = [StableDiffusionTool().langchain, ImageCaptioningTool().langchain,
+         StableDiffusionPromptGeneratorTool().langchain, TextToVideoTool().langchain]
+
+
+agent = initialize_agent(tools, llm, memory=memory, agent="conversational-react-description", verbose=True)
+output = agent.run(input=("Please create a photo of a dog riding a skateboard "
+                          "but improve my prompt prior to using an image generator."
+                          "Please caption the generated image and create a video for it using the improved prompt."))
+```
+
+You'll note that we are using some pre-built tools that come with `gradio_tools`. Please see this [doc](https://github.com/freddyaboulton/gradio-tools#gradio-tools-gradio--llm-agents) for a complete list of the tools that come with `gradio_tools`.
+If you would like to use a tool that's not currently in `gradio_tools`, it is very easy to add your own. That's what the next section will cover.
+
+## gradio_tools - creating your own tool
+
+The core abstraction is the `GradioTool`, which lets you define a new tool for your LLM as long as you implement a standard interface:
+
+```python
+class GradioTool(BaseTool):
+
+    def __init__(self, name: str, description: str, src: str) -> None:
+
+    @abstractmethod
+    def create_job(self, query: str) -> Job:
+        pass
+
+    @abstractmethod
+    def postprocess(self, output: Tuple[Any] | Any) -> str:
+        pass
+```
+
+The requirements are:
+
+1. The name for your tool
+2. The description for your tool. This is crucial! Agents decide which tool to use based on their description. Be precise and be sure to include example of what the input and the output of the tool should look like.
+3. The url or space id, e.g. `freddyaboulton/calculator`, of the Gradio application. Based on this value, `gradio_tool` will create a [gradio client](https://github.com/gradio-app/gradio/blob/main/client/python/README.md) instance to query the upstream application via API. Be sure to click the link and learn more about the gradio client library if you are not familiar with it.
+4. create_job - Given a string, this method should parse that string and return a job from the client. Most times, this is as simple as passing the string to the `submit` function of the client. More info on creating jobs [here](https://github.com/gradio-app/gradio/blob/main/client/python/README.md#making-a-prediction)
+5. postprocess - Given the result of the job, convert it to a string the LLM can display to the user.
+6. _Optional_ - Some libraries, e.g. [MiniChain](https://github.com/srush/MiniChain/tree/main), may need some info about the underlying gradio input and output types used by the tool. By default, this will return gr.Textbox() but
+   if you'd like to provide more accurate info, implement the `_block_input(self, gr)` and `_block_output(self, gr)` methods of the tool. The `gr` variable is the gradio module (the result of `import gradio as gr`). It will be
+   automatically imported by the `GradiTool` parent class and passed to the `_block_input` and `_block_output` methods.
+
+And that's it!
+
+Once you have created your tool, open a pull request to the `gradio_tools` repo! We welcome all contributions.
+
+## Example tool - Stable Diffusion
+
+Here is the code for the StableDiffusion tool as an example:
+
+```python
+from gradio_tool import GradioTool
+import os
+
+class StableDiffusionTool(GradioTool):
+    """Tool for calling stable diffusion from llm"""
+
+    def __init__(
+        self,
+        name="StableDiffusion",
+        description=(
+            "An image generator. Use this to generate images based on "
+            "text input. Input should be a description of what the image should "
+            "look like. The output will be a path to an image file."
+        ),
+        src="gradio-client-demos/stable-diffusion",
+        hf_token=None,
+    ) -> None:
+        super().__init__(name, description, src, hf_token)
+
+    def create_job(self, query: str) -> Job:
+        return self.client.submit(query, "", 9, fn_index=1)
+
+    def postprocess(self, output: str) -> str:
+        return [os.path.join(output, i) for i in os.listdir(output) if not i.endswith("json")][0]
+
+    def _block_input(self, gr) -> "gr.components.Component":
+        return gr.Textbox()
+
+    def _block_output(self, gr) -> "gr.components.Component":
+        return gr.Image()
+```
+
+Some notes on this implementation:
+
+1. All instances of `GradioTool` have an attribute called `client` that is a pointed to the underlying [gradio client](https://github.com/gradio-app/gradio/tree/main/client/python#gradio_client-use-a-gradio-app-as-an-api----in-3-lines-of-python). That is what you should use
+   in the `create_job` method.
+2. `create_job` just passes the query string to the `submit` function of the client with some other parameters hardcoded, i.e. the negative prompt string and the guidance scale. We could modify our tool to also accept these values from the input string in a subsequent version.
+3. The `postprocess` method simply returns the first image from the gallery of images created by the stable diffusion space. We use the `os` module to get the full path of the image.
+
+## Conclusion
+
+You now know how to extend the abilities of your LLM with the 1000s of gradio spaces running in the wild!
+Again, we welcome any contributions to the [gradio_tools](https://github.com/freddyaboulton/gradio-tools) library.
+We're excited to see the tools you all build!
+
+================================================================================
+
+Source: huggingface/transformers/blob/main/docs/source/en/transformers_agents.md
+URL: https://github.com/huggingface/transformers/blob/main/docs/source/en/transformers_agents.md
+
+!--Copyright 2023 The HuggingFace Team. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+⚠️ Note that this file is in Markdown but contain specific syntax for our doc-builder (similar to MDX) that may not be
+rendered properly in your Markdown viewer.
+
+-->
+
+# Transformers Agents
+
+<Tip warning={true}>
+
+Transformers Agents is an experimental API which is subject to change at any time. Results returned by the agents
+can vary as the APIs or underlying models are prone to change.
+
+</Tip>
+
+Transformers version v4.29.0, building on the concept of *tools* and *agents*. You can play with in
+[this colab](https://colab.research.google.com/drive/1c7MHD-T1forUPGcC_jlwsIptOzpG3hSj).
+
+In short, it provides a natural language API on top of transformers: we define a set of curated tools and design an 
+agent to interpret natural language and to use these tools. It is extensible by design; we curated some relevant tools, 
+but we'll show you how the system can be extended easily to use any tool developed by the community.
+
+Let's start with a few examples of what can be achieved with this new API. It is particularly powerful when it comes 
+to multimodal tasks, so let's take it for a spin to generate images and read text out loud.
+
+```py
+agent.run("Caption the following image", image=image)
+```
+
+| **Input**                                                                                                                   | **Output**                        |
+|-----------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/beaver.png" width=200> | A beaver is swimming in the water |
+
+---
+
+```py
+agent.run("Read the following text out loud", text=text)
+```
+| **Input**                                                                                                               | **Output**                                   |
+|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| A beaver is swimming in the water | <audio controls><source src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tts_example.wav" type="audio/wav"> your browser does not support the audio element. </audio>
+
+---
+
+```py
+agent.run(
+    "In the following `document`, where will the TRRF Scientific Advisory Council Meeting take place?",
+    document=document,
+)
+```
+| **Input**                                                                                                                   | **Output**     |
+|-----------------------------------------------------------------------------------------------------------------------------|----------------|
+| <img src="https://datasets-server.huggingface.co/assets/hf-internal-testing/example-documents/--/hf-internal-testing--example-documents/test/0/image/image.jpg" width=200> | ballroom foyer |
+
+## Quickstart
+
+Before being able to use `agent.run`, you will need to instantiate an agent, which is a large language model (LLM). 
+We provide support for openAI models as well as opensource alternatives from BigCode and OpenAssistant. The openAI
+models perform better (but require you to have an openAI API key, so cannot be used for free); Hugging Face is
+providing free access to endpoints for BigCode and OpenAssistant models.
+
+To start with, please install the `agents` extras in order to install all default dependencies.
+```bash
+pip install transformers[agents]
+```
+
+To use openAI models, you instantiate an [`OpenAiAgent`] after installing the `openai` dependency:
+
+```bash
+pip install openai
+```
+
+
+```py
+from transformers import OpenAiAgent
+
+agent = OpenAiAgent(model="text-davinci-003", api_key="<your_api_key>")
+```
+
+To use BigCode or OpenAssistant, start by logging in to have access to the Inference API:
+
+```py
+from huggingface_hub import login
+
+login("<YOUR_TOKEN>")
+```
+
+Then, instantiate the agent
+
+```py
+from transformers import HfAgent
+
+# Starcoder
+agent = HfAgent("https://api-inference.huggingface.co/models/bigcode/starcoder")
+# StarcoderBase
+# agent = HfAgent("https://api-inference.huggingface.co/models/bigcode/starcoderbase")
+# OpenAssistant
+# agent = HfAgent(url_endpoint="https://api-inference.huggingface.co/models/OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5")
+```
+
+This is using the inference API that Hugging Face provides for free at the moment. If you have your own inference
+endpoint for this model (or another one) you can replace the URL above with your URL endpoint.
+
+<Tip>
+
+StarCoder and OpenAssistant are free to use and perform admirably well on simple tasks. However, the checkpoints
+don't hold up when handling more complex prompts. If you're facing such an issue, we recommend trying out the OpenAI
+model which, while sadly not open-source, performs better at this given time.
+
+</Tip>
+
+You're now good to go! Let's dive into the two APIs that you now have at your disposal.
+
+### Single execution (run)
+
+The single execution method is when using the [`~Agent.run`] method of the agent:
+
+```py
+agent.run("Draw me a picture of rivers and lakes.")
+```
+
+<img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/rivers_and_lakes.png" width=200>
+
+It automatically selects the tool (or tools) appropriate for the task you want to perform and runs them appropriately. It
+can perform one or several tasks in the same instruction (though the more complex your instruction, the more likely
+the agent is to fail).
+
+```py
+agent.run("Draw me a picture of the sea then transform the picture to add an island")
+```
+
+<img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/sea_and_island.png" width=200>
+
+<br/>
+
+
+Every [`~Agent.run`] operation is independent, so you can run it several times in a row with different tasks.
+
+Note that your `agent` is just a large-language model, so small variations in your prompt might yield completely
+different results. It's important to explain as clearly as possible the task you want to perform. We go more in-depth
+on how to write good prompts [here](custom_tools#writing-good-user-inputs).
+
+If you'd like to keep a state across executions or to pass non-text objects to the agent, you can do so by specifying
+variables that you would like the agent to use. For example, you could generate the first image of rivers and lakes, 
+and ask the model to update that picture to add an island by doing the following:
+
+```python
+picture = agent.run("Generate a picture of rivers and lakes.")
+updated_picture = agent.run("Transform the image in `picture` to add an island to it.", picture=picture)
+```
+
+<Tip>
+
+This can be helpful when the model is unable to understand your request and mixes tools. An example would be:
+
+```py
+agent.run("Draw me the picture of a capybara swimming in the sea")
+```
+
+Here, the model could interpret in two ways:
+- Have the `text-to-image` generate a capybara swimming in the sea
+- Or, have the `text-to-image` generate capybara, then use the `image-transformation` tool to have it swim in the sea
+
+In case you would like to force the first scenario, you could do so by passing it the prompt as an argument:
+
+```py
+agent.run("Draw me a picture of the `prompt`", prompt="a capybara swimming in the sea")
+```
+
+</Tip>
+
+
+### Chat-based execution (chat)
+
+The agent also has a chat-based approach, using the [`~Agent.chat`] method:
+
+```py
+agent.chat("Generate a picture of rivers and lakes")
+```
+
+<img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/rivers_and_lakes.png" width=200> 
+
+```py
+agent.chat("Transform the picture so that there is a rock in there")
+```
+
+<img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/rivers_and_lakes_and_beaver.png" width=200>
+
+<br/>
+
+This is an interesting approach when you want to keep the state across instructions. It's better for experimentation, 
+but will tend to be much better at single instructions rather than complex instructions (which the [`~Agent.run`]
+method is better at handling).
+
+This method can also take arguments if you would like to pass non-text types or specific prompts.
+
+### ⚠️ Remote execution
+
+For demonstration purposes and so that it could be used with all setups, we had created remote executors for several 
+of the default tools the agent has access for the release. These are created using 
+[inference endpoints](https://huggingface.co/inference-endpoints).
+
+We have turned these off for now, but in order to see how to set up remote executors tools yourself,
+we recommend reading the [custom tool guide](./custom_tools).
+
+### What's happening here? What are tools, and what are agents?
+
+<img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/diagram.png">
+
+#### Agents
+
+The "agent" here is a large language model, and we're prompting it so that it has access to a specific set of tools.
+
+LLMs are pretty good at generating small samples of code, so this API takes advantage of that by prompting the 
+LLM gives a small sample of code performing a task with a set of tools. This prompt is then completed by the 
+task you give your agent and the description of the tools you give it. This way it gets access to the doc of the 
+tools you are using, especially their expected inputs and outputs, and can generate the relevant code.
+
+#### Tools
+
+Tools are very simple: they're a single function, with a name, and a description. We then use these tools' descriptions 
+to prompt the agent. Through the prompt, we show the agent how it would leverage tools to perform what was 
+requested in the query.
+
+This is using brand-new tools and not pipelines, because the agent writes better code with very atomic tools. 
+Pipelines are more refactored and often combine several tasks in one. Tools are meant to be focused on
+one very simple task only.
+
+#### Code-execution?!
+
+This code is then executed with our small Python interpreter on the set of inputs passed along with your tools. 
+We hear you screaming "Arbitrary code execution!" in the back, but let us explain why that is not the case.
+
+The only functions that can be called are the tools you provided and the print function, so you're already 
+limited in what can be executed. You should be safe if it's limited to Hugging Face tools. 
+
+Then, we don't allow any attribute lookup or imports (which shouldn't be needed anyway for passing along 
+inputs/outputs to a small set of functions) so all the most obvious attacks (and you'd need to prompt the LLM 
+to output them anyway) shouldn't be an issue. If you want to be on the super safe side, you can execute the 
+run() method with the additional argument return_code=True, in which case the agent will just return the code 
+to execute and you can decide whether to do it or not.
+
+The execution will stop at any line trying to perform an illegal operation or if there is a regular Python error 
+with the code generated by the agent.
+
+### A curated set of tools
+
+We identify a set of tools that can empower such agents. Here is an updated list of the tools we have integrated 
+in `transformers`:
+
+- **Document question answering**: given a document (such as a PDF) in image format, answer a question on this document ([Donut](./model_doc/donut))
+- **Text question answering**: given a long text and a question, answer the question in the text ([Flan-T5](./model_doc/flan-t5))
+- **Unconditional image captioning**: Caption the image! ([BLIP](./model_doc/blip))
+- **Image question answering**: given an image, answer a question on this image ([VILT](./model_doc/vilt))
+- **Image segmentation**: given an image and a prompt, output the segmentation mask of that prompt ([CLIPSeg](./model_doc/clipseg))
+- **Speech to text**: given an audio recording of a person talking, transcribe the speech into text ([Whisper](./model_doc/whisper))
+- **Text to speech**: convert text to speech ([SpeechT5](./model_doc/speecht5))
+- **Zero-shot text classification**: given a text and a list of labels, identify to which label the text corresponds the most ([BART](./model_doc/bart))
+- **Text summarization**: summarize a long text in one or a few sentences ([BART](./model_doc/bart))
+- **Translation**: translate the text into a given language ([NLLB](./model_doc/nllb))
+
+These tools have an integration in transformers, and can be used manually as well, for example:
+
+```py
+from transformers import load_tool
+
+tool = load_tool("text-to-speech")
+audio = tool("This is a text to speech tool")
+```
+
+### Custom tools
+
+While we identify a curated set of tools, we strongly believe that the main value provided by this implementation is 
+the ability to quickly create and share custom tools.
+
+By pushing the code of a tool to a Hugging Face Space or a model repository, you're then able to leverage the tool 
+directly with the agent. We've added a few 
+**transformers-agnostic** tools to the [`huggingface-tools` organization](https://huggingface.co/huggingface-tools):
+
+- **Text downloader**: to download a text from a web URL
+- **Text to image**: generate an image according to a prompt, leveraging stable diffusion
+- **Image transformation**: modify an image given an initial image and a prompt, leveraging instruct pix2pix stable diffusion
+- **Text to video**: generate a small video according to a prompt, leveraging damo-vilab
+
+The text-to-image tool we have been using since the beginning is a remote tool that lives in 
+[*huggingface-tools/text-to-image*](https://huggingface.co/spaces/huggingface-tools/text-to-image)! We will
+continue releasing such tools on this and other organizations, to further supercharge this implementation.
+
+The agents have by default access to tools that reside on [`huggingface-tools`](https://huggingface.co/huggingface-tools).
+We explain how to you can write and share your tools as well as leverage any custom tool that resides on the Hub in [following guide](custom_tools).
+
+### Code generation
+
+So far we have shown how to use the agents to perform actions for you. However, the agent is only generating code
+that we then execute using a very restricted Python interpreter. In case you would like to use the code generated in 
+a different setting, the agent can be prompted to return the code, along with tool definition and accurate imports.
+
+For example, the following instruction
+```python
+agent.run("Draw me a picture of rivers and lakes", return_code=True)
+```
+
+returns the following code
+
+```python
+from transformers import load_tool
+
+image_generator = load_tool("huggingface-tools/text-to-image")
+
+image = image_generator(prompt="rivers and lakes")
+```
+
+that you can then modify and execute yourself.
+
+================================================================================
+
+Source: huggingface/blog/blob/main/dialog-agents.md
+URL: https://github.com/huggingface/blog/blob/main/dialog-agents.md
+
+--
+title: "What Makes a Dialog Agent Useful?" 
+thumbnail: /blog/assets/dialog-agents/thumbnail.png
+authors:
+- user: nazneen
+- user: natolambert
+- user: VictorSanh
+- user: ThomWolf
+---
+
+
+# What Makes a Dialog Agent Useful?
+## The techniques behind ChatGPT: RLHF, IFT, CoT, Red teaming, and more
+
+
+_This article has been translated to Chinese  [简体中文](https://mp.weixin.qq.com/s/Xd5VtRP-ziH-PYFOci65Hg)_. 
+
+A few weeks ago, ChatGPT emerged and launched the public discourse into a set of obscure acronyms: RLHF, SFT, IFT, CoT, and more, all attributed to the success of ChatGPT. What are these obscure acronyms and why are they so important? We surveyed all the important papers on these topics to categorize these works, summarize takeaways from what has been done, and share what remains to be shown.
+
+Let’s start by looking at the landscape of language model based conversational agents. ChatGPT is not the first, in fact many organizations published their language model dialog agents before OpenAI, including [Meta’s BlenderBot](https://arxiv.org/abs/2208.03188), [Google’s LaMDA](https://arxiv.org/abs/2201.08239), [DeepMind’s Sparrow](https://arxiv.org/abs/2209.14375), and [Anthropic’s Assistant](https://arxiv.org/abs/2204.05862) (_a continued development of this agent without perfect attribution is also known as Claude_). Some groups have also announced their plans to build a open-source chatbot and publicly shared a roadmap ([LAION’s Open Assistant](https://github.com/LAION-AI/Open-Assistant)); others surely are doing so and have not announced it. 
+
+The following table compares these AI chatbots based on the details of their public access, training data, model architecture, and evaluation directions.  ChatGPT is not documented so we instead share details about InstructGPT which is a instruction fine-tuned model from OpenAI that is believed to have served as a foundation of ChatGPT.
+
+| &nbsp;| LaMDA | BlenderBot 3 |Sparrow | ChatGPT/ InstructGPT | Assistant|
+| --- | --- | --- | --- | --- | --- |
+| **Org** | Google | Meta | DeepMind | OpenAI | Anthropic |
+| **Access**  | Closed | Open | Closed | Limited | Closed |
+| **Size** | 137B | 175B | 70B | 175B | 52B |
+| **Pre-trained<br>Base model** | Unknown | OPT | Chinchilla | GPT-3.5 | Unknown |
+| **Pre-training corpora size** (# tokens) | 2.81T | 180B | 1.4T | Unknown | 400B |
+| **Model can<br>access the web** | ✔ | ✔ | ✔ | ✖️ | ✖️ |
+| **Supervised<br>fine-tuning** | ✔ | ✔ | ✔ | ✔ | ✔ |
+| **Fine-tuning<br>data size** | Quality:6.4K<br>Safety: 8K<br>Groundedness: 4K<br>IR: 49K | 20 NLP datasets ranging from 18K to 1.2M | Unknown | 12.7K (for InstructGPT, likely much more for ChatGPT) | 150K + LM generated data |
+| **RLHF** | ✖️ | ✖️ | ✔ | ✔ | ✔ |
+| **Hand written rules for safety** | ✔ | ✖️ | ✔ | ✖️ | ✔ |
+| **Evaluation criteria** | 1. Quality (sensibleness, specificity, interestingness)<br>2. Safety (includes bias) 3. Groundedness | 1, Quality (engagingness, use of knowledge)<br>2. Safety (toxicity, bias) | 1. Alignment (Helpful, Harmless, Correct)<br>2. Evidence (from web)<br>3. Rule violation<br>4. Bias and stereotypes<br>5. Trustworthiness | 1. Alignment (Helpful, Harmless, Truthfulness)<br>2. Bias | 1. Alignment (Helpful, Harmless, Honesty)<br>2. Bias |
+| **Crowdsourcing platform used for data labeling**| U.S. based vendor | Amazon MTurk | Unknown | Upwork and Scale AI | Surge AI, Amazon MTurk, and Upwork |
+
+We observe that albeit there are many differences in the training data, model, and fine-tuning, there are also some commonalities. One common goal for all the above chatbots is *instru*c*tion following ,* i.e., to follow user-specified instructions. For example, instructing ChatGPT to write a poem on fine-tuning.
+
+![ChatGPT instruction example](assets/dialog-agents/chatgpt-example.png)
+
+### **********************************************************************************************From prediction text to following instructions:**********************************************************************************************
+
+Usually, the language-modeling objective of the base model is not sufficient for a model to learn to follow a user’s direction in a helpful way. Model creators use **Instruction Fine-Tuning (IFT)** that involves fine-tuning the base model on demonstrations of written directions on a very diverse set of tasks, in addition to classical NLP tasks of sentiment, text classification, summarization etc. These instruction demonstrations are made up of three main components — the instruction, the inputs and the outputs.  The inputs are optional, some tasks only require instructions such as open-ended generation as in the example above with ChatGPT.  A input and output when present form an *instance*. There can be multiple instances of inputs and outputs for a given instruction. See below for examples (taken from [Wang et al., ‘22]).
+
+![Instruction and instance example](assets/dialog-agents/ift.png)
+
+Data for IFT is usually a collection of human-written instructions and instances of instructions bootstrapped using a language model. For bootstrapping, the LM is prompted (as in the figure above) in a few-shot setting with examples and instructed to generate new  instructions, inputs, and outputs. In each round, the model is prompted with samples chosen from both human-written and model generated.  The amount of human and model contributions to creating the dataset is a spectrum; see figure below. 
+
+![IFT spectrum](assets/dialog-agents/ift-spectrum.png)
+
+On one end is the purely model-generated IFT dataset such as Unnatural Instructions ([Honovich et al., ‘22](https://arxiv.org/abs/2212.09689)) and on the other is a large community effort of hand-crafted instructions as in Super-natural instructions ([Wang et al., ‘22](https://arxiv.org/abs/2204.07705)). In between these two are works on using a small set of high quality seed dataset followed by bootstrapping such as Self-instruct ([Wang et al., 22](https://arxiv.org/pdf/2212.10560.pdf)). Yet another way of collating a dataset for IFT is to take the existing high-quality crowdsourced NLP datasets on various tasks (including prompting) and cast those as instructions using a unified schema or diverse templates. This line of work includes the T0 ([Sanh et al., ‘22](https://arxiv.org/pdf/2110.08207.pdf)), Natural instructions dataset ([Mishra et al., ‘22](https://arxiv.org/pdf/2104.08773.pdf)), the FLAN LM ([Wei et al., ‘22](https://arxiv.org/pdf/2109.01652.pdf)), and the OPT-IML ([Iyer et al.,’22](https://arxiv.org/pdf/2212.12017.pdf)).
+
+### Safely following instructions
+
+Instruction fine-tuned LMs, however, may not always generate responses that are ********helpful******** and **********safe.**********  Examples of this kind of behavior include being evasive by always giving a unhelpful response such as “I’m sorry, I don’t understand. ” or generating an unsafe response to user inputs on a sensitive topic.  To alleviate such behavior, model developers use **Supervised Fine-tuning (SFT),**  fine-tuning the base language model on high-quality human annotated data for helpfulness and harmlessness. For example, see table below taken from the Sparrow paper (Appendix F).
+
+SFT and IFT are very closely linked. Instruction tuning can be seen as a subset of supervised fine-tuning. In the recent literature, the SFT phase has often been utilized for safety topics, rather than instruction-specific topics, which is done after IFT. In the future, this taxonomy and delineation should mature into clearer use-cases and methodology.
+
+![Han-written rules for safety](assets/dialog-agents/rules.png)
+
+Google’s LaMDA is also fine-tuned on a dialog dataset with safety annotations based on a set of rules (Appendix A). These rules are usually pre-defined and developed by model creators and encompass a wide set of topics including harm, discrimination, misinformation. 
+
+### Fine-tuning the models
+
+On the other hand, Open AI’s InstructGPT, DeepMind’s Sparrow, and Anthropic’s Constitutional AI use human annotations of preferences in a setup called **reinforcement learning from human feedback (RLHF).** In RLHF, a set a model responses are ranked based on human feedback (e.g. choosing a text blurb that is preferred over another). Next, a preference model is trained on those annotated responses to return a scalar reward for the RL optimizer. Finally, the dialog agent is trained to simulate the preference model via reinforcement learning.  See our previous [blog post](https://huggingface.co/blog/rlhf) on RLHF for more details.
+
+**Chain-of-thought (CoT)** prompting ([Wei et al., ‘22](https://arxiv.org/abs/2201.11903)) is a special case of instruction demonstration that generates output by eliciting step-by-step reasoning from the dialog agent. Models fine-tuned with CoT use instruction datasets with human annotations of step-by-step reasoning. It’s the origin of the famous prompt, ***************************[let’s think step by step](https://arxiv.org/abs/2205.11916)***************************. The example below is taken from [Chung et al., ‘22](https://arxiv.org/pdf/2210.11416.pdf). The orange color highlights the instruction, the pink color shows the input and the output, and the blue color is the CoT reasoning.
+
+![Illustration of CoT](assets/dialog-agents/cot.png)
+
+Models fine-tuned with CoT have shown to perform much better on tasks involving commonsense, arithmetic, and symbolic reasoning as in [Chung et al., ‘22](https://arxiv.org/pdf/2210.11416.pdf). 
+
+CoT fine-tuning have also shown to be very effective for harmlessness (sometimes doing better than RLHF) without the model being evasive and generating “Sorry, I cannot respond to this question,” for prompts that are sensitive as shown by [Bai et al.,’22](https://www.anthropic.com/constitutional.pdf). See Appendix D of their paper for more examples.
+
+![Comparing CoT and RLHF](assets/dialog-agents/rlhf.png)
+
+## Takeaways:
+
+1. You only need a very tiny fraction of data for instruction fine-tuning (order of few hundreds) compared to the pre-training data.
+2. Supervised fine-tuning uses human annotations to make model outputs safer and helpful.
+3. CoT fine-tuning improves model performance on tasks requiring step-by-step thinking and makes them less evasive on sensitive topics.
+
+## Next steps for dialogue agents
+
+This blog summarizes many of the existing work on what makes a dialog agent useful. But there are still many open questions yet to be explored. We list some of them here.
+
+1. How important is RL in learning from human feedback? Can we get the performance of RLHF with training on higher quality data in IFT or SFT? 
+2. How does SFT+ RLHF as in Sparrow compare to just using SFT as in LaMDA for safety?
+3. How much pre-training is necessary, given that we have IFT, SFT, CoT, and RLHF? What are the tradeoffs? What are the best base models people should use (both those publicly available, and not)?
+4. Many of the models referenced in this paper have been carefully engineered with [red-teaming](https://arxiv.org/abs/2209.07858), where engineers specifically search for failure modes and influence future training (prompts and methods) based on unveiled issues. How do we systematically record the effects of these methods and reproduce them? 
+
+PS: Please let us know if you find any information in this blog missing or incorrect.
+
+****************Citation****************
+
+`Rajani et al., "What Makes a Dialog Agent Useful?", Hugging Face Blog, 2023.`
+
+BibTeX citation:
+
+```
+@article{rajani2023ift,
+  author = {Rajani, Nazneen and Lambert, Nathan and Sanh, Victor and Wolf, Thomas},
+  title = {What Makes a Dialog Agent Useful?},
+  journal = {Hugging Face Blog},
+  year = {2023},
+  note = {https://huggingface.co/blog/dialog-agents},
+}
+```
