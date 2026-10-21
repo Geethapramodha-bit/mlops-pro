@@ -1,0 +1,53 @@
+id,question,reference,prediction,exact_match,f1
+57373f80c3c5551400e51e91,What did objects in forced motion contain according to the late Medieval idea that influence Aristotle?,impetus,"According to the late Medieval idea that influenced Aristotle, objects in forced motion contained an innate force of impetus.",0,0.1
+5730a0778ab72b1400f9c60b,What was thought to decide a person's behavior?,the environment in which they lived,The environment in which they lived.,1,1.0
+57297bc9af94a219006aa4c8,What makes the method of trial division more efficient?,if a complete list of primes up to  is known,Knowing a complete list of primes up to n.,0,0.7368421052631577
+5ad24ff3d7d075001a428ca6,What makes up 49.2% of the sun's mass?,NO ANSWER,Oxygen.,0,0.0
+5ad40864604f3c001a3ffeee,What is not a problem?,NO ANSWER,NO ANSWER,1,1.0
+5a57cf7a770dc0001aeefda5,What have CT scans lead to for doctors and their patients?,NO ANSWER,NO ANSWER,1,1.0
+57293e983f37b3190047818b,When was the joint statement on climate change issued?,2001,2001,1,1.0
+5ad4a682ba00c4001a268eca,What does not depend on the immune system's ability to distinguish between the self and others?,NO ANSWER,NO ANSWER,1,1.0
+5ad3a21d604f3c001a3fea21,What was the significance of British loss?,NO ANSWER,NO ANSWER,1,1.0
+57373f80c3c5551400e51e93,What force acted on bodies to retard their velocity?,friction,Friction.,1,1.0
+57337ddc4776f41900660bbb,How far from Warsaw does the Vistula river's environment change noticeably? ,15 kilometres,About 15 kilometres (9 miles) from Warsaw.,0,0.4444444444444445
+5a83894de60761001a2eb78b,What do epithelial cells have at the oral end?,NO ANSWER,NO ANSWER,1,1.0
+5730b4282461fd1900a9cfc9,Who argued that the USSR had itself become an imperialist power?,Mao Zedong,Mao Zedong.,1,1.0
+5ad502385b96ef001a10a954,How many posters are in Warsaw?,NO ANSWER,NO ANSWER,1,1.0
+5acfef5477cf76001a686584, When was the Ottoman Caliphate maintained?,NO ANSWER,NO ANSWER,1,1.0
+572ffee1947a6a140053cf18,What book was Iqbal's seven English lectures published as?,The Reconstruction of Religious Thought in Islam,The Reconstruction of Religious Thought in Islam.,1,1.0
+5a822dc931013a001a335298,What increased about Harvard's student body in 2005?,NO ANSWER,The quality of the student body and its motivation have also increased.,0,0.0
+5725c28a271a42140099d150,What are the main legislative bodies of the European Union?,European Parliament and the Council of the European Union,The main legislative bodies of the European Union are the European Parliament and the Council of the European Union.,0,0.6428571428571429
+5730208fa23a5019007fcdf0,Where does HAMAS want to establish an Islamic state?,Palestine,In Palestine.,0,0.6666666666666666
+5ad40cac604f3c001a400088, What Jewish practice did the Yuan keep?,NO ANSWER,Kosher butchering.,0,0.0
+5a7b070121c2de001afe9cee,The BankAmericard could be used across many merchants but could not do what?,NO ANSWER,NO ANSWER,1,1.0
+570960cf200fba1400367f02,What year did BSkyB and Microsoft announce their settlement?,2013,2013,1,1.0
+57302bd0b2c2fd14005689db,What type of group is The Islamic State?,Wahhabi/Salafi jihadist extremist militant,Wahhabi/Salafi jihadist extremist militant group,0,0.888888888888889
+5a2eccc9a83784001a7d24a1,What type of scientist is David Herlihy?,NO ANSWER,Historian,0,0.0
+5acf974277cf76001a6853ac,What are graduate courses at the U of C known for?,NO ANSWER,NO ANSWER,1,1.0
+5a5645196349e2001acdccff,Packet Switching had a goal of creating what? ,NO ANSWER,"A fault-tolerant, efficient routing method for telecommunication messages.",0,0.0
+5727515f708984140094dc15,In what century did missionaries notably establish church schools in South Africa?,nineteenth,The answer is: the 19th century.,0,0.0
+571cd88ddd7acb1400e4c18f,What type of reaction is present in the emergency oxygen generator of an airplane?,exothermic,Exothermic reaction.,0,0.6666666666666666
+5726bc1add62a815002e8ea9,In which case was a Dutch national not entitled to continue receiving benefits when he moved to Belgium?,Hendrix v Employee,Hendrix v Employee Insurance Institute,0,0.7499999999999999
+57376828c3c5551400e51ebd,How do you determine the acceleration of a rope when two people are pulling it?,Associating forces with vectors,NO ANSWER,0,0.0
+5ad28098d7d075001a4297bc,Where are the most settlements located?,NO ANSWER,"The answer is: ""crowded on the narrow river banks""",0,0.1818181818181818
+5730b6592461fd1900a9cfd0,What kinds of sciences were Social Darwinism and theories of race?,pseudo-sciences,Pseudo-sciences,1,1.0
+572847dd4b864d19001648bc,What feature of the Amazon made people believe it couldn't have many inhabitants?,the poor soil,Poor soil.,0,0.8
+571cda1bdd7acb1400e4c199,In what form is oxygen transported in smaller containers?,compressed gas,"In compressed gas form, in smaller cylinders.",0,0.4444444444444445
+5a8930573b2508001a72a504,What test is especially useful for tests of the form 2p-1?,NO ANSWER,The Lucas-Lehmer test.,0,0.0
+57266c015951b619008f723a,Previous to isotopic dating sections of rocks had to be dated using fossils and stratigraphic correlation relative to what? ,to one another,Each other.,0,0.0
+5ad267e2d7d075001a429249,"When economic inequality is larger, more waste and pollution is?",NO ANSWER,"NO ANSWER
+
+The context does not provide information about what happens when economic inequality is larger. In fact, it suggests that as economic inequality decreases, more waste and pollution is created, but it does not address the situation when economic inequality is larger.",0,0.08888888888888888
+5acfeba077cf76001a6864c5, Whose occupation of Kuwait did Iraq military personal seek to put an end to?,NO ANSWER,Saddam Hussein's,0,0.0
+57300e2604bcaa1900d770bb,Who stated he wanted Israel to vanish?,President Mahmoud Ahmadinejad,President Mahmoud Ahmadinejad,1,1.0
+572ffb02b2c2fd14005686b8,What elements from the rift system in the Alpine orogeny in Southwest Germany?,Upper Rhine Graben,"Upper Rhine Graben, Lower Rhine Embayment",0,0.6666666666666666
+5727e9523acd2414000def98,What is the term that describes the difference between what higher paid and lower paid professionals earn?,productivity gap,Productivity gap,1,1.0
+5a8225de31013a001a335262,What was erected in South Africa by Duke Kent-Brown to protest Harvard?,NO ANSWER,NO ANSWER,1,1.0
+57275409708984140094dc35,"After apartheid, what types of schools are referred to as ""Model C"" schools?",government schools formerly reserved for white children,"Following the transition to democracy, the legal form of ""Model C"" was abolished, however, the term continues to be used to describe government schools formerly reserved for white children.",0,0.3888888888888889
+56e1ce08e3433e14004231a8,A problem set that that is hard for the expression NP can also be stated how?,NP-hard,A problem set that is hard for the expression NP can also be stated as an NP-hard problem.,0,0.10526315789473684
+572683075951b619008f7514,How do platyctenids reproduce?,internal fertilization and keep the eggs in brood chambers until they hatch.,Internal fertilization and keeping the eggs in brood chambers until they hatch.,0,0.9166666666666666
+5ad3a7ef604f3c001a3feade,What wasn't extent of Celeron's expedition?,NO ANSWER,NO ANSWER,1,1.0
+57296d571d04691400779415,What theorem defines the main role of primes in number theory?,The fundamental theorem of arithmetic,The fundamental theorem of arithmetic establishes the central role of primes in number theory.,0,0.5263157894736842
+5a2c382dbfd06b001a5aea72,What is the proprietary system that Sky+HD can't use?,NO ANSWER,NO ANSWER,1,1.0
+572a135daf94a219006aa79f,The immune systems of bacteria have enzymes that protect against infection by what kind of cells?,bacteriophage,Bacteriophage infections.,0,0.6666666666666666
+57108198b654c5140001f93a,What is the southern region where protestants are concentrated?,Cévennes,The southern region where Protestants are concentrated is the Cévennes mountain region.,0,0.15384615384615385

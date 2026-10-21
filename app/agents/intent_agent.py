@@ -44,9 +44,9 @@ def route_by_intent(state: AgentState):
 def retrieve_context(state: AgentState):
     context = retriever.search(
         state["text"],
+        category=state["route"],
         top_k=3
     )
-
     return {"context": context}
 
 
@@ -55,21 +55,56 @@ def generate_answer(state: AgentState):
         state["text"],
         state["context"]
     )
-
     return {"response": response}
 
 
 graph_builder = StateGraph(AgentState)
 
-graph_builder.add_node("classify_intent", classify_intent)
-graph_builder.add_node("route_by_intent", route_by_intent)
-graph_builder.add_node("retrieve_context", retrieve_context)
-graph_builder.add_node("generate_answer", generate_answer)
+graph_builder.add_node(
+    "classify_intent",
+    classify_intent
+)
 
-graph_builder.add_edge(START, "classify_intent")
-graph_builder.add_edge("classify_intent", "route_by_intent")
-graph_builder.add_edge("route_by_intent", "retrieve_context")
-graph_builder.add_edge("retrieve_context", "generate_answer")
-graph_builder.add_edge("generate_answer", END)
+graph_builder.add_node(
+    "route_by_intent",
+    route_by_intent
+)
+
+graph_builder.add_node(
+    "retrieve_context",
+    retrieve_context
+)
+
+graph_builder.add_node(
+    "generate_answer",
+    generate_answer
+)
+
+
+graph_builder.add_edge(
+    START,
+    "classify_intent"
+)
+
+graph_builder.add_edge(
+    "classify_intent",
+    "route_by_intent"
+)
+
+graph_builder.add_edge(
+    "route_by_intent",
+    "retrieve_context"
+)
+
+graph_builder.add_edge(
+    "retrieve_context",
+    "generate_answer"
+)
+
+graph_builder.add_edge(
+    "generate_answer",
+    END
+)
+
 
 intent_agent = graph_builder.compile()

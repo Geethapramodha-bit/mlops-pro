@@ -10,6 +10,7 @@ class Retriever:
             "all-MiniLM-L6-v2",
             local_files_only=True
         )
+
         self.client = chromadb.PersistentClient(
             path=CHROMA_PATH
         )
@@ -18,14 +19,26 @@ class Retriever:
             name="support_knowledge"
         )
 
-    def search(self, query: str, top_k: int = 3):
+    def search(
+        self,
+        query: str,
+        category: str | None = None,
+        top_k: int = 3
+    ):
         query_embedding = self.embedding_model.encode(
             [query]
         ).tolist()
 
-        results = self.collection.query(
-            query_embeddings=query_embedding,
-            n_results=top_k
-        )
+        query_args = {
+            "query_embeddings": query_embedding,
+            "n_results": top_k
+        }
+
+        if category:
+            query_args["where"] = {
+                "category": category
+            }
+
+        results = self.collection.query(**query_args)
 
         return results["documents"][0]

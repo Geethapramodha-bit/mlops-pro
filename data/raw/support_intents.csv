@@ -1,0 +1,49 @@
+text,intent
+I forgot my password,account
+I cannot log into my account,account
+My account is locked,account
+How do I reset my password,account
+I need help with my account,account
+Should I share my password,account
+My payment failed,payment
+My payment was declined,payment
+My card was declined,payment
+My payment is pending,payment
+Why did my payment fail,payment
+I was charged but the payment is pending,payment
+I need a refund,refund
+Can I get a refund,refund
+I want to refund my order,refund
+How do I request a refund,refund
+How long will my refund take,refund
+I have not received my refund,refund
+The application crashed,technical
+The app keeps crashing,technical
+The website shows an error,technical
+The website is not working,technical
+I am getting an error,technical
+The app is not working,technical
+My account has been locked,account
+Why is my account locked,account
+I cannot access my account,account
+I am locked out of my account,account
+My login is blocked,account
+How can I unlock my account,account
+I was charged twice for the same payment,payment
+Why was my card payment rejected,payment
+The payment did not go through,payment
+My transaction was declined,payment
+Why is my transaction still pending,payment
+I cannot complete my payment,payment
+How can I ask for my money back,refund
+I want to get my money back,refund
+Can I return this order for a refund,refund
+My refund has not arrived,refund
+Where is my refund,refund
+How do I get a refund for my purchase,refund
+My application is not opening,technical
+The app stopped working,technical
+I cannot open the application,technical
+The website keeps crashing,technical
+I am unable to use the website,technical
+The application is showing an error,technical

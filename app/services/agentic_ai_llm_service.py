@@ -13,14 +13,20 @@ def generate_agentic_ai_response(
         return "Please enter a question."
 
     if not retrieved_context:
-        return "I could not find relevant information in the knowledge base."
+        return (
+            "I could not find relevant information "
+            "in the knowledge base."
+        )
 
     context_parts = []
 
     for item in retrieved_context:
         source = item.get("source", "Unknown")
         source_url = item.get("source_url", "")
-        text = item.get("text", "")
+        text = item.get("text", "").strip()
+
+        if not text:
+            continue
 
         context_parts.append(
             f"Source: {source}\n"
@@ -28,23 +34,46 @@ def generate_agentic_ai_response(
             f"Content:\n{text}"
         )
 
+    if not context_parts:
+        return (
+            "I could not find relevant information "
+            "in the knowledge base."
+        )
+
     context_text = "\n\n".join(context_parts)
 
     prompt = f"""
-You are an AI assistant specializing in Agentic AI,
-large language models, tools, and retrieval-augmented generation.
+You are a careful AI assistant specializing in Agentic AI,
+large language models, AI agents, tools, and RAG.
 
-Answer the user's question using the provided context.
-Explain concepts clearly and accurately.
-Do not invent facts that are not supported by the context.
-If the context is insufficient, state that clearly.
-Do not claim to have executed tools or actions unless you actually have.
+STRICT RULES:
+1. Answer only when the provided context contains information
+   that directly supports the answer.
+2. Retrieved documents may be irrelevant to the question.
+   Do not assume that retrieved context is automatically relevant.
+3. If the context does not contain enough relevant information,
+   reply exactly:
+   "I could not find enough relevant information in my knowledge base to answer this question."
+4. Never invent facts, sources, images, variables, tools, or tool outputs.
+5. Never generate pretend code showing tools being executed.
+6. Do not claim to execute tools or perform actions.
+7. Answer in clear, concise language.
+8. Do not repeat the same point unnecessarily.
+9. Use only the supplied context for factual claims.
 
-Context:
+RETRIEVED CONTEXT:
+<context>
 {context_text}
+</context>
 
-User question:
+USER QUESTION:
+<question>
 {question}
+</question>
+
+Before answering, determine whether the context actually supports
+the requested information. If it does not, use the exact fallback
+response specified in rule 3.
 
 Answer:
 """
@@ -57,6 +86,9 @@ Answer:
                 "content": prompt,
             }
         ],
+        options={
+            "temperature": 0,
+        },
     )
 
-    return response["message"]["content"]
+    return response["message"]["content"].strip()

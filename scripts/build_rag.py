@@ -9,19 +9,34 @@ def load_documents():
     with open(KNOWLEDGE_BASE_PATH, "r", encoding="utf-8") as file:
         text = file.read()
 
-    documents = [
-        doc.strip()
-        for doc in text.split("\n\n")
-        if doc.strip()
-    ]
+    sections = text.split("\n\n")
 
-    return documents
+    documents = []
+    categories = []
+
+    current_category = None
+
+    for section in sections:
+        section = section.strip()
+
+        if not section:
+            continue
+
+        if section.endswith("SUPPORT"):
+            current_category = section.replace(" SUPPORT", "").lower()
+            continue
+
+        documents.append(section)
+        categories.append(current_category)
+
+    return documents, categories
 
 
 def main():
-    documents = load_documents()
+    documents, categories = load_documents()
 
     print("Documents loaded:", len(documents))
+    print("Categories:", categories)
 
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -29,16 +44,29 @@ def main():
 
     client = chromadb.PersistentClient(path=CHROMA_PATH)
 
-    collection = client.get_or_create_collection(
+    # Remove the old collection so stale documents are deleted
+    try:
+        client.delete_collection("support_knowledge")
+        print("Old ChromaDB collection deleted.")
+    except Exception:
+        print("No existing collection to delete.")
+
+    collection = client.create_collection(
         name="support_knowledge"
     )
 
     ids = [f"doc_{i}" for i in range(len(documents))]
 
+    metadatas = [
+        {"category": category}
+        for category in categories
+    ]
+
     collection.upsert(
         ids=ids,
         documents=documents,
-        embeddings=embeddings
+        embeddings=embeddings,
+        metadatas=metadatas
     )
 
     print("Documents stored in ChromaDB:", collection.count())

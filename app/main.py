@@ -3,13 +3,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.agents.intent_agent import intent_agent
+from app.agents.agentic_ai_graph import agentic_ai_graph
 from app.services.conversation_logger import (
     log_conversation,
     update_feedback,
-)
-from app.rag.agentic_ai_retriever import AgenticAIRetriever
-from app.services.agentic_ai_llm_service import (
-    generate_agentic_ai_response,
 )
 
 
@@ -27,10 +24,6 @@ class FeedbackRequest(BaseModel):
 
 class AgenticAIRequest(BaseModel):
     text: str
-
-
-# Initialize the Agentic AI retriever
-agentic_ai_retriever = AgenticAIRetriever()
 
 
 @app.get("/")
@@ -88,23 +81,22 @@ def feedback(request: FeedbackRequest):
     }
 
 
-# New Agentic AI RAG endpoint
+# Agentic AI endpoint using LangGraph
 @app.post("/agentic-ai")
 def agentic_ai_chat(request: AgenticAIRequest):
-    retrieved_context = agentic_ai_retriever.search(
-        request.text,
-        top_k=3,
-    )
-
-    response = generate_agentic_ai_response(
-        request.text,
-        retrieved_context,
-    )
+    result = agentic_ai_graph.invoke({
+        "question": request.text,
+        "retrieved_context": [],
+        "response": "",
+        "action": "",
+    })
 
     return {
         "text": request.text,
         "sources": [
-            item["source"] for item in retrieved_context
+            item["source"]
+            for item in result["retrieved_context"]
         ],
-        "response": response,
+        "response": result["response"],
+        "action": result["action"],
     }
