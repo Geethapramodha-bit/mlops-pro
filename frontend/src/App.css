@@ -1,0 +1,28 @@
+
+/* Remove the default Vite layout constraints. */
+#root {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+::selection {
+  background: rgba(103, 153, 255, 0.3);
+}
+
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #45454d transparent;
+}

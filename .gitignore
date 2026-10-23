@@ -26,3 +26,7 @@ htmlcov/
 # Local reports and editor files
 .idea/
 .vscode/
+# Local BotPlayer database
+data/botplayer.db
+data/botplayer.db-shm
+data/botplayer.db-wal
