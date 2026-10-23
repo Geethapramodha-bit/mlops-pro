@@ -60,3 +60,44 @@ If we recap:
   - A **single policy is learned from all the agents**.
   - Takes as input the present state of an environment and the policy outputs joint actions.
   - The reward is global.
+  # LangGraph: Building Stateful AI Workflows
+
+LangGraph is a framework for building stateful, multi-step applications using large language models. It is designed to coordinate AI agents and workflows that may contain multiple steps, conditional decisions, and repeated execution.
+
+## Graph Structure
+
+A LangGraph workflow is represented as a graph containing nodes and edges.
+
+Nodes are Python functions or other executable components that perform tasks, such as retrieving documents, calling an LLM, or processing a result.
+
+Edges define the transitions between nodes and determine which step executes next.
+
+A START node marks the beginning of a workflow, and an END node marks its completion.
+
+## State Management
+
+State stores the information shared between nodes during workflow execution. For example, an AI assistant may maintain the user's question, retrieved context, generated response, and current action in its state.
+
+Nodes can read the current state and return updates to it. This allows information to move through the workflow.
+
+## Conditional Edges
+
+Conditional edges select the next node based on the current state or the result of a decision.
+
+For example, a RAG workflow can retrieve documents and check whether relevant context exists. If relevant documents are found, the workflow can call an LLM to generate an answer. If no relevant documents are found, it can return a fallback response.
+
+## Creating and Compiling a Graph
+
+A typical LangGraph workflow uses StateGraph to define its state structure and nodes. Nodes and edges are added to the graph, and the graph is compiled before execution.
+
+The compiled graph can then be invoked with an initial state.
+
+## LangGraph and RAG
+
+LangGraph can coordinate the steps of a retrieval-augmented generation system. A workflow may retrieve documents from a vector database, evaluate their relevance, generate an answer using an LLM, or return a fallback when the context is insufficient.
+
+LangGraph controls the workflow, while the retriever searches for relevant information and the LLM generates the response.
+
+## LangGraph Applications
+
+LangGraph is useful for stateful AI agents, RAG pipelines, conditional workflows, tool-using agents, and multi-step LLM applications.

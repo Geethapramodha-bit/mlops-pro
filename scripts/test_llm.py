@@ -1,15 +1,14 @@
+
 from app.services.llm_service import generate_response
 
+question = "I forgot my password. What should I do?"
 
-prompt = """
-You are a helpful customer support assistant.
+context = [
+    "For password problems, contact customer support "
+    "for assistance with account recovery."
+]
 
-Answer this question briefly:
-
-I forgot my password. What should I do?
-"""
-
-response = generate_response(prompt)
+response = generate_response(question, context)
 
 print("\nLLM Response:")
 print(response)

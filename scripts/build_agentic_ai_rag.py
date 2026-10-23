@@ -7,6 +7,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 DATASET_PATH = Path("data/raw/agentic_ai_dataset.json")
+LOCAL_DOCS_DIR = Path("data/raw/agentic_ai")
 CHROMA_PATH = "data/processed/chroma_db"
 COLLECTION_NAME = "agentic_ai_knowledge"
 
@@ -17,8 +18,6 @@ CHUNK_OVERLAP = 40
 def clean_text(text):
     # Remove HTML comments and license headers
     text = re.sub(r"<!--.*?-->", " ", text, flags=re.DOTALL)
-
-    # Remove malformed leading license headers
     text = re.sub(
         r"^\s*!--Copyright.*?-->\s*",
         " ",
@@ -32,10 +31,10 @@ def clean_text(text):
     # Keep Markdown link text but remove its URL
     text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)
 
-    # Remove HTML/MDX tags without deleting line breaks
+    # Remove HTML/MDX tags
     text = re.sub(r"<[^>]+>", " ", text)
 
-    # Remove excessive spaces while preserving newlines
+    # Normalize whitespace
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
 
@@ -44,15 +43,12 @@ def clean_text(text):
 
 def chunk_text(text):
     text = clean_text(text)
-
-    # Split by headings while preserving the heading with its section
     sections = re.split(r"(?m)(?=^#{1,6}\s+)", text)
 
     chunks = []
 
     for section in sections:
         section = section.strip()
-
         if not section:
             continue
 
@@ -74,10 +70,31 @@ def chunk_text(text):
     return chunks
 
 
-def main():
+def load_documents():
+    # Load the original Hugging Face dataset
     documents = json.loads(
         DATASET_PATH.read_text(encoding="utf-8")
     )
+
+    # Add local Agentic AI knowledge files
+    for file_path in sorted(LOCAL_DOCS_DIR.glob("*.txt")):
+        text = file_path.read_text(encoding="utf-8-sig").strip()
+
+        if not text:
+            print(f"Skipping empty file: {file_path.name}")
+            continue
+
+        documents.append({
+            "source": f"local/{file_path.name}",
+            "source_url": "",
+            "text": text,
+        })
+
+    return documents
+
+
+def main():
+    documents = load_documents()
 
     chunks = []
     metadatas = []
@@ -96,7 +113,7 @@ def main():
 
             metadatas.append({
                 "source": item["source"],
-                "source_url": item["source_url"],
+                "source_url": item.get("source_url", ""),
                 "document_index": doc_index,
                 "chunk_index": chunk_index,
                 "topic": "agentic_ai",
@@ -125,11 +142,11 @@ def main():
 
     client = chromadb.PersistentClient(path=CHROMA_PATH)
 
-    # Replace only the Agentic AI collection.
-    # Preserve support_knowledge and squad_evaluation.
+    # Replace only the Agentic AI collection
+    # Support and evaluation collections remain untouched.
     try:
         client.delete_collection(COLLECTION_NAME)
-        print("Previous Agentic AI collection replaced.")
+        print("Previous Agentic AI collection deleted.")
     except Exception:
         print("No previous Agentic AI collection found.")
 

@@ -1230,3 +1230,34 @@ These types have three specific purposes:
 ### AgentAudio
 
 [[autodoc]] transformers.tools.agent_types.AgentAudio
+# Transformer Models: Core Concepts
+
+A transformer is a neural network architecture designed to process sequences of data, especially text. Transformers use an attention mechanism to identify relationships between different tokens in a sequence.
+
+## Self-Attention
+
+Self-attention allows a transformer to determine how much each token in a sequence should relate to other tokens. It helps the model use contextual information when processing text.
+
+## Encoder and Decoder
+
+The transformer architecture can contain an encoder, a decoder, or both.
+
+An encoder processes the input sequence and produces contextual representations. Encoder-based models are useful for tasks such as text classification and understanding language.
+
+A decoder generates tokens sequentially based on previously generated tokens. Decoder-based models are commonly used for text generation and conversational AI.
+
+An encoder-decoder transformer uses an encoder to process input and a decoder to generate output. This architecture is useful for tasks such as translation and summarization.
+
+## Multi-Head Attention
+
+Multi-head attention uses multiple attention mechanisms in parallel. Each head can learn different relationships between tokens, helping the model represent different aspects of the input.
+
+## Positional Information
+
+Transformers need positional information because attention alone does not inherently represent token order. Positional encodings or positional embeddings provide information about token positions.
+
+## Transformer Applications
+
+Transformer models are used for text classification, translation, summarization, question answering, text generation, and conversational AI.
+
+Examples of transformer model families include BERT, GPT, and T5. BERT is commonly used for language understanding, GPT for autoregressive text generation, and T5 for text-to-text tasks.

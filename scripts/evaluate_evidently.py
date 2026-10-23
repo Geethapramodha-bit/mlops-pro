@@ -1,3 +1,4 @@
+
 import pandas as pd
 
 from evidently import Report
@@ -9,39 +10,39 @@ REPORT_PATH = "reports/evidently_report.html"
 
 
 def main():
-
-    # Load conversation data
     df = pd.read_csv(CONVERSATION_PATH)
 
-    print("Conversation data loaded:", df.shape)
-
-    # Select columns useful for monitoring
-    current_data = df[
-        [
-            "user_query",
-            "intent",
-            "feedback"
-        ]
-    ].copy()
-
-    # For the first development version, use the same
-    # dataset as both reference and current data.
-    reference_data = current_data.copy()
-
-    report = Report(
-        metrics=[
-            DataDriftPreset()
-        ]
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"], errors="coerce"
     )
+    df = df.dropna(subset=["timestamp"])
+
+    reference_data = df[
+        df["timestamp"] < "2026-10-01"
+    ][["user_query", "intent"]].copy()
+
+    current_data = df[
+        df["timestamp"] >= "2026-10-01"
+    ][["user_query", "intent"]].copy()
+
+    if reference_data.empty or current_data.empty:
+        raise ValueError(
+            "Both reference and current datasets must contain records."
+        )
+
+    print("Reference records:", len(reference_data))
+    print("Current records:", len(current_data))
+
+    report = Report(metrics=[DataDriftPreset()])
 
     result = report.run(
         current_data=current_data,
-        reference_data=reference_data
+        reference_data=reference_data,
     )
 
     result.save_html(REPORT_PATH)
 
-    print("Evidently report created successfully!")
+    print("Evidently drift report created successfully!")
     print("Report:", REPORT_PATH)
 
 

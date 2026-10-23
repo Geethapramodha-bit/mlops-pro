@@ -9,3 +9,20 @@ models/*.pkl
 
 data/processed/
 data/external/
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Conversation backups and local data
+data/conversations/*.backup
+data/conversations/*.csv.backup
+
+# Python and test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local reports and editor files
+.idea/
+.vscode/
