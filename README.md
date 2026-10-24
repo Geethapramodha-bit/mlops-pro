@@ -82,7 +82,19 @@ pip install -r requirements.txt
 
 If your environment uses a different dependency-management workflow, follow the dependency instructions in the repository.
 
-### 4. Prepare the local LLM
+### 4. Configure the session secret
+
+The API requires `BOTPLAYER_SESSION_SECRET` to sign authentication sessions. Create a local `.env` file with a randomly generated secret (the value is written to the file and is not printed):
+
+```powershell
+if (-not (Test-Path .env)) {
+    python -c "import secrets; from pathlib import Path; Path('.env').write_text('BOTPLAYER_SESSION_SECRET=' + secrets.token_urlsafe(32) + '\n', encoding='utf-8')"
+}
+```
+
+Keep the `.env` file private; it is excluded from Git. `.env.example` lists the required variable without containing a secret. A secret supplied directly in the process environment takes precedence over the `.env` value.
+
+### 5. Prepare the local LLM
 
 Start Ollama and ensure the model is available:
 
@@ -90,7 +102,7 @@ Start Ollama and ensure the model is available:
 ollama pull llama3:latest
 ```
 
-### 5. Start the API
+### 6. Start the API
 
 From the repository root:
 

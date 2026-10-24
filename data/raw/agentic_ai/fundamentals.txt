@@ -1,0 +1,50 @@
+﻿# AI and Agentic AI Fundamentals
+
+## What is Artificial Intelligence?
+Artificial Intelligence (AI) is the field of creating computer systems that perform tasks requiring human-like intelligence, such as learning, reasoning, problem-solving, and understanding language.
+
+## What is a Large Language Model?
+A Large Language Model (LLM) is a machine learning model trained on large amounts of text to understand and generate human language. LLMs can answer questions, summarize text, write code, and assist with reasoning.
+
+## What is a Transformer?
+A Transformer is a neural network architecture that uses attention mechanisms to process relationships between tokens in a sequence. Transformers are widely used in modern language models. The original Transformer architecture contains an encoder and a decoder, while many modern models use only an encoder or only a decoder.
+
+## What is RAG?
+RAG stands for Retrieval-Augmented Generation. It combines information retrieval with text generation. A RAG system retrieves relevant information from a knowledge source and provides that information to a language model so it can generate a context-grounded response.
+
+## How does RAG work?
+1. A user asks a question.
+2. The system converts the question into an embedding.
+3. A retriever searches a knowledge base for relevant text.
+4. The retrieved text is supplied to the language model as context.
+5. The language model generates an answer using the question and retrieved context.
+
+## What is an embedding?
+An embedding is a numerical representation of text or another data item. Embeddings allow systems to compare semantic similarity between questions and documents.
+
+## What is a vector database?
+A vector database stores and searches vector embeddings. In a RAG system, it can retrieve documents whose embeddings are semantically similar to a user's question. ChromaDB is an example of a vector database.
+
+## What is an AI agent?
+An AI agent is a system that uses a model to interpret a goal, decide on actions, and use available tools or information to complete a task.
+
+## What is an agentic AI system?
+An agentic AI system uses one or more AI agents to perform tasks through reasoning, planning, tool use, or multi-step workflows. Its behavior depends on its design and the tools and permissions it is given.
+
+## What is a tool in an AI agent?
+A tool is a function or external capability that an agent can invoke to perform an operation, such as searching information, executing a calculation, or calling an API.
+
+## What is LangGraph?
+LangGraph is a framework for building stateful, multi-step applications involving language models and agents. It represents workflows as graphs with nodes and transitions.
+
+## What is FastAPI?
+FastAPI is a Python web framework for building APIs. It can expose a chatbot's backend functionality to a frontend application.
+
+## What is MLflow?
+MLflow is a platform for tracking machine learning experiments and managing model-related artifacts and workflows.
+
+## What is DVC?
+DVC (Data Version Control) is a tool for versioning datasets, models, and machine learning pipelines alongside source code.
+
+## What is Docker?
+Docker packages an application and its dependencies into containers to help it run consistently across environments.

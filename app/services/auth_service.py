@@ -6,10 +6,13 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+from dotenv import load_dotenv
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from sqlalchemy.orm import Session
 
 from app.services.models import User
+
+load_dotenv()
 
 SESSION_SECRET = os.getenv("BOTPLAYER_SESSION_SECRET")
 
