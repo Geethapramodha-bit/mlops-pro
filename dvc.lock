@@ -1,0 +1,22 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python scripts/train_model.py
+    deps:
+    - path: data/raw/intents.csv
+      hash: md5
+      md5: f3e7dac6405c21d90fc2e4e810c7d150
+      size: 1376105
+    - path: scripts/train_model.py
+      hash: md5
+      md5: 2d43f7fa420a834d953c5e151716e107
+      size: 8112
+    outs:
+    - path: models/intent_classifier.pkl
+      hash: md5
+      md5: 98edd55aa46a14b60ad1cca39c92deb5
+      size: 6035607
+    - path: models/tfidf_vectorizer.pkl
+      hash: md5
+      md5: 24c25e89a67c291d347036452fad8d98
+      size: 101831

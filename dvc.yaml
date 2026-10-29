@@ -1,0 +1,9 @@
+﻿stages:
+  train:
+    cmd: python scripts/train_model.py
+    deps:
+      - scripts/train_model.py
+      - data/raw/intents.csv
+    outs:
+      - models/intent_classifier.pkl
+      - models/tfidf_vectorizer.pkl

@@ -30,3 +30,6 @@ htmlcov/
 data/botplayer.db
 data/botplayer.db-shm
 data/botplayer.db-wal
+
+# Temporary CI test environment
+.venv-ci-check/

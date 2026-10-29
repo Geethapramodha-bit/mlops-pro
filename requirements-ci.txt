@@ -1,0 +1,3 @@
+﻿
+-r requirements-docker.txt
+email-validator==2.3.0
