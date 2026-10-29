@@ -7,8 +7,11 @@ from fastapi.testclient import TestClient
 # Prevent model and retriever initialization during API smoke tests.
 mock_intent_agent_module = MagicMock()
 mock_intent_agent_module.intent_agent = MagicMock()
-
 sys.modules["app.agents.intent_agent"] = mock_intent_agent_module
+
+mock_agentic_ai_graph_module = MagicMock()
+mock_agentic_ai_graph_module.agentic_ai_graph = MagicMock()
+sys.modules["app.agents.agentic_ai_graph"] = mock_agentic_ai_graph_module
 
 from app.main import app
 
@@ -27,4 +30,3 @@ def test_health():
 
     assert response.status_code == 200
     assert response.json()["status"] == "healthy"
-
