@@ -32,7 +32,7 @@ export default function App() {
 
         if (active) {
           setUser(data.user);
-          setEntered(true);
+          setEntered(false);
         }
       } catch {
         if (active) {

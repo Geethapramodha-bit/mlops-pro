@@ -3,16 +3,19 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from app.api.auth import (
+    get_current_user,
+    router as auth_router,
+)
+from app.api.conversations import router as conversations_router
+
 from app.agents.intent_agent import intent_agent
 from app.agents.agentic_ai_graph import agentic_ai_graph
+
 from app.services.conversation_logger import (
     log_conversation,
     update_feedback,
 )
-
-from app.api.auth import router as auth_router
-from app.api.conversations import router as conversations_router
-from app.api.auth import get_current_user
 from app.services.database import Base, engine
 from app.services import models
 from app.services.models import User
@@ -53,6 +56,9 @@ class FeedbackRequest(BaseModel):
 
 class AgenticAIRequest(BaseModel):
     text: str
+    conversation_history: list[dict[str, str]] = Field(
+        default_factory=list
+    )
 
 
 @app.get("/")
@@ -125,11 +131,25 @@ def agentic_ai_chat(
     request: AgenticAIRequest,
     user: User = Depends(get_current_user),
 ):
+    # Keep only valid user/assistant messages and limit history.
+    conversation_history = []
+
+    for message in request.conversation_history[-8:]:
+        role = message.get("role", "").lower()
+        content = message.get("content", "").strip()
+
+        if role in {"user", "assistant"} and content:
+            conversation_history.append({
+                "role": role,
+                "content": content[:1000],
+            })
+
     result = agentic_ai_graph.invoke({
         "question": request.text,
         "retrieved_context": [],
         "response": "",
         "action": "",
+        "conversation_history": conversation_history,
     })
 
     return {

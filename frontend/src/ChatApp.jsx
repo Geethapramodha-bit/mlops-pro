@@ -179,6 +179,7 @@ export default function ChatApp({ onSessionExpired }) {
 
   function newChat() {
     if (loading) return;
+
     setActiveId(null);
     setInput("");
     setError("");
@@ -247,9 +248,11 @@ export default function ChatApp({ onSessionExpired }) {
 
     recognition.onresult = (event) => {
       let transcript = "";
+
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
+
       setInput(transcript);
     };
 
@@ -258,6 +261,7 @@ export default function ChatApp({ onSessionExpired }) {
 
   async function sendMessage(text = input) {
     const question = text.trim();
+
     if (!question || loading) return;
 
     setInput("");
@@ -281,11 +285,32 @@ export default function ChatApp({ onSessionExpired }) {
         conversationMode = created.conversation.assistant_mode;
 
         setActiveId(chatId);
+
         setChats((previous) => [
           { ...created.conversation, messages: [] },
           ...previous,
         ]);
       }
+
+      // Capture the messages that existed before this question.
+      // Do not include the current question as conversation history.
+      const existingChat = chats.find((chat) => chat.id === chatId);
+
+      const conversationHistory =
+        conversationMode === "agentic"
+          ? (existingChat?.messages ?? [])
+              .filter(
+                (message) =>
+                  ["user", "assistant"].includes(message.role) &&
+                  typeof message.content === "string" &&
+                  message.content.trim()
+              )
+              .slice(-8)
+              .map((message) => ({
+                role: message.role,
+                content: message.content.slice(0, 1000),
+              }))
+          : [];
 
       const savedUserMessage = await request(
         `/conversations/${chatId}/messages`,
@@ -313,9 +338,17 @@ export default function ChatApp({ onSessionExpired }) {
       const endpoint =
         conversationMode === "agentic" ? "/agentic-ai" : "/chat";
 
+      const requestBody =
+        conversationMode === "agentic"
+          ? {
+              text: question,
+              conversation_history: conversationHistory,
+            }
+          : { text: question };
+
       const result = await request(endpoint, {
         method: "POST",
-        body: JSON.stringify({ text: question }),
+        body: JSON.stringify(requestBody),
       });
 
       const answer =
@@ -424,6 +457,7 @@ export default function ChatApp({ onSessionExpired }) {
                     {chat.title}
                   </button>
                 ))}
+
                 {chats.length === 0 && (
                   <p className="px-2 py-2 text-xs leading-5 text-[#747474]">
                     Your chats will appear here.
@@ -442,6 +476,7 @@ export default function ChatApp({ onSessionExpired }) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#202020] text-[#c7c7c7]">
                   <Icon name="spark" size={16} />
                 </div>
+
                 <div>
                   <p className="text-xs font-medium text-[#e5e5e5]">
                     {mode === "agentic" ? "Agentic AI" : "Support Chatbot"}
@@ -451,6 +486,7 @@ export default function ChatApp({ onSessionExpired }) {
                   </p>
                 </div>
               </div>
+
               <Icon name="chevron" size={16} />
             </button>
 
@@ -465,6 +501,7 @@ export default function ChatApp({ onSessionExpired }) {
                 >
                   Agentic AI Assistant
                 </button>
+
                 <button
                   onClick={() => {
                     setMode("support");
@@ -499,7 +536,9 @@ export default function ChatApp({ onSessionExpired }) {
               <Icon name="panel" size={18} />
             </button>
           )}
+
           <span className="text-sm font-medium">botplayer</span>
+
           <span className="text-xs text-[#929292]">
             {mode === "agentic" ? "Agentic AI" : "Support"}
           </span>
@@ -511,6 +550,7 @@ export default function ChatApp({ onSessionExpired }) {
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.1] bg-[#141414] text-[#e1e1e1]">
                 <Icon name="spark" size={22} />
               </div>
+
               <h1 className="text-center text-[25px] font-medium tracking-tight text-[#ececec] sm:text-[30px]">
                 What can I help with?
               </h1>
@@ -535,17 +575,20 @@ export default function ChatApp({ onSessionExpired }) {
                         size={16}
                       />
                     </div>
+
                     <div className="min-w-0 flex-1 whitespace-pre-wrap break-words pt-1 text-[14px] leading-[1.85] text-[#e4e4e4]">
                       {message.content}
                     </div>
                   </div>
                 ))}
+
                 {loading && (
                   <div className="flex items-center gap-3 pl-1 text-[13px] text-[#a0a0a0]">
                     <Icon name="spark" size={17} />
                     botplayer is thinking...
                   </div>
                 )}
+
                 <div ref={bottomRef} />
               </div>
             </div>
@@ -574,11 +617,14 @@ export default function ChatApp({ onSessionExpired }) {
                 rows={2}
                 className="max-h-48 min-h-[48px] w-full resize-none bg-transparent px-1 py-2.5 text-[14px] leading-6 text-[#ececec] outline-none placeholder:text-[#999]"
               />
+
               <div className="flex items-center justify-between pb-1 pt-1">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={startVoiceInput}
-                    aria-label={listening ? "Stop voice input" : "Start voice input"}
+                    aria-label={
+                      listening ? "Stop voice input" : "Start voice input"
+                    }
                     title="Voice to text"
                     className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
                       listening
@@ -588,10 +634,12 @@ export default function ChatApp({ onSessionExpired }) {
                   >
                     <Icon name="mic" size={18} />
                   </button>
+
                   <span className="hidden text-[11px] text-[#858585] sm:inline">
                     Enter to send · Shift + Enter for a new line
                   </span>
                 </div>
+
                 <button
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || loading}
@@ -602,6 +650,7 @@ export default function ChatApp({ onSessionExpired }) {
                 </button>
               </div>
             </div>
+
             <p className="mt-2.5 text-center text-[10px] text-[#777]">
               botplayer can make mistakes. Verify important information.
             </p>

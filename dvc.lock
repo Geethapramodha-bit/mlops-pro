@@ -1,16 +1,20 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python scripts/train_model.py
+    cmd: python -m scripts.train_model
     deps:
+    - path: app/mlops/evaluation_gate.py
+      hash: md5
+      md5: 75ac5fdf4385b88013876601166e2780
+      size: 739
     - path: data/raw/intents.csv
       hash: md5
       md5: f3e7dac6405c21d90fc2e4e810c7d150
       size: 1376105
     - path: scripts/train_model.py
       hash: md5
-      md5: 2d43f7fa420a834d953c5e151716e107
-      size: 8112
+      md5: 0757ae9fd09dc690b069b45495e50376
+      size: 8296
     outs:
     - path: models/intent_classifier.pkl
       hash: md5
@@ -18,5 +22,5 @@ stages:
       size: 6035607
     - path: models/tfidf_vectorizer.pkl
       hash: md5
-      md5: 24c25e89a67c291d347036452fad8d98
+      md5: 3c695aebeff30565f25b1a4b98d4d94a
       size: 101831

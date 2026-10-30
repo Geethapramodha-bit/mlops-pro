@@ -1,8 +1,10 @@
-﻿stages:
+﻿
+stages:
   train:
-    cmd: python scripts/train_model.py
+    cmd: python -m scripts.train_model
     deps:
       - scripts/train_model.py
+      - app/mlops/evaluation_gate.py
       - data/raw/intents.csv
     outs:
       - models/intent_classifier.pkl

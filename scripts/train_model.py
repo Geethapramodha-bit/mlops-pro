@@ -1,9 +1,12 @@
+
 import os
 
 import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
+
+from app.mlops.evaluation_gate import check_evaluation_gate
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -66,6 +69,8 @@ def main():
     # --------------------------------------------------
     # 3. MLflow experiment
     # --------------------------------------------------
+    # Use SQLite instead of the deprecated filesystem backend.
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
     mlflow.set_experiment("intent-classification")
 
     with mlflow.start_run():
@@ -123,6 +128,21 @@ def main():
         print("Precision:", validation_precision)
         print("Recall   :", validation_recall)
         print("F1-score :", validation_f1)
+        # Model evaluation gate
+        mlflow.log_metric("validation_accuracy", validation_accuracy)
+        mlflow.log_metric("validation_precision", validation_precision)
+        mlflow.log_metric("validation_recall", validation_recall)
+        mlflow.log_metric("validation_f1", validation_f1)
+
+        try:
+            check_evaluation_gate(validation_accuracy, validation_f1)
+            mlflow.set_tag("evaluation_gate", "passed")
+            print("\nEvaluation gate PASSED.")
+        except ValueError as exc:
+            mlflow.set_tag("evaluation_gate", "failed")
+            mlflow.set_tag("evaluation_gate_reason", str(exc))
+            print(f"\n{exc}")
+            raise
 
         # --------------------------------------------------
         # 6. Final test evaluation
@@ -178,25 +198,6 @@ def main():
         )
 
         # --------------------------------------------------
-        # 8. Save model
-        # --------------------------------------------------
-        os.makedirs("models", exist_ok=True)
-
-        joblib.dump(
-            vectorizer,
-            VECTORIZER_PATH
-        )
-
-        joblib.dump(
-            model,
-            MODEL_PATH
-        )
-
-        print("Model saved:")
-        print(VECTORIZER_PATH)
-        print(MODEL_PATH)
-
-        # --------------------------------------------------
         # 9. MLflow parameters
         # --------------------------------------------------
         mlflow.log_param(
@@ -235,29 +236,6 @@ def main():
         )
 
         # --------------------------------------------------
-        # 10. MLflow validation metrics
-        # --------------------------------------------------
-        mlflow.log_metric(
-            "validation_accuracy",
-            validation_accuracy
-        )
-
-        mlflow.log_metric(
-            "validation_precision",
-            validation_precision
-        )
-
-        mlflow.log_metric(
-            "validation_recall",
-            validation_recall
-        )
-
-        mlflow.log_metric(
-            "validation_f1",
-            validation_f1
-        )
-
-        # --------------------------------------------------
         # 11. MLflow test metrics
         # --------------------------------------------------
         mlflow.log_metric(
@@ -288,8 +266,32 @@ def main():
             name="intent_classifier"
         )
 
-        print("\nMLflow run completed.")
+
+        # 13. Save model
+        # --------------------------------------------------
+        os.makedirs("models", exist_ok=True)
+
+        joblib.dump(
+            vectorizer,
+            VECTORIZER_PATH
+        )
+
+        joblib.dump(
+            model,
+            MODEL_PATH
+        )
+
+        print("\nModel saved:")
+        print(VECTORIZER_PATH)
+        print(MODEL_PATH)
+
+        # --------------------------------------------------
+        print("\nMLflow run completed successfully.")
 
 
 if __name__ == "__main__":
     main()
+
+
+
+

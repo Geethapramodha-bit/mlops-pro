@@ -1,3 +1,4 @@
+
 from typing import TypedDict
 
 
@@ -6,3 +7,4 @@ class AgenticAIState(TypedDict):
     retrieved_context: list[dict]
     response: str
     action: str
+    conversation_history: list[dict]
