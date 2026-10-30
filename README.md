@@ -1,225 +1,446 @@
-# Agentic RAG MLOps
+# Agentic RAG MLOps Chatbot
 
-An AI-powered application combining a traditional customer-support chatbot with an Agentic AI learning assistant. The project uses machine learning, Retrieval-Augmented Generation (RAG), LangGraph, FastAPI, ChromaDB, Ollama, and Docker.
+An AI-powered customer-support chatbot and Agentic AI learning assistant, supported by an end-to-end MLOps workflow for model training, evaluation, experiment tracking, data versioning, deployment and monitoring.
 
-## Project Overview
+## 1. Project Overview
 
-This project provides two AI workflows:
+This project combines two AI workflows:
 
-1. **Support Chatbot:** Classifies user queries into intents, routes them to appropriate handlers, generates responses, and records conversations and feedback.
-2. **Agentic AI Learning Assistant:** Retrieves relevant information from a knowledge base and uses an LLM to generate context-grounded answers. When sufficient relevant information is unavailable, it returns a fallback response.
+**1. Customer Support Chatbot**
+- Classifies user queries into support intents.
+- Routes queries to appropriate handlers.
+- Generates responses based on predicted intent.
+- Records conversations and user feedback.
 
-The repository also includes model evaluation, RAG evaluation, experiment tracking, and data/model pipeline tooling.
+**2. Agentic AI Learning Assistant**
+- Retrieves relevant information from a knowledge base.
+- Uses ChromaDB for vector similarity search.
+- Uses LangGraph to manage the agent workflow.
+- Uses an LLM through Ollama to generate context-grounded responses.
+- Provides fallback responses when relevant knowledge is unavailable.
 
-## Architecture
+The project integrates MLOps practices to make model development, evaluation, tracking, versioning and monitoring reproducible.
 
-### Support Chatbot
+## 2. Architecture
 
-1. A user submits a query through the FastAPI `/chat` endpoint.
-2. The intent classifier predicts the query category.
-3. The application routes the query to the appropriate handler.
-4. The response is returned to the user.
-5. Conversation records and feedback can be stored through the application endpoints.
+### Application workflow
 
-### Agentic AI Learning Assistant
+1. User submits a query through the chatbot interface or FastAPI.
+2. The NLP intent classifier predicts the query category.
+3. The application routes the request to the appropriate handler.
+4. The Agentic AI workflow retrieves knowledge when required.
+5. The LLM generates a response using available context.
+6. The application returns the response and records conversation data.
 
-1. The user submits a question.
-2. A SentenceTransformer model converts the question into an embedding.
-3. ChromaDB retrieves the top matching knowledge-base documents.
-4. A LangGraph workflow checks retrieval results and decides whether to answer or use the fallback path.
-5. Ollama runs the local LLM to generate a response using retrieved context.
-6. The API returns the answer and available source information.
+### MLOps workflow
 
-## Technology Stack
+**Data Versioning → Model Training → Evaluation → Experiment Tracking → Model Registry → Deployment → Monitoring**
 
-- **Language:** Python 3.12
-- **API:** FastAPI and Uvicorn
-- **Machine Learning:** scikit-learn
-- **Embeddings:** SentenceTransformers (`all-MiniLM-L6-v2`)
-- **Vector Database:** ChromaDB
-- **Agent Workflow:** LangGraph
-- **LLM Runtime:** Ollama with `llama3:latest`
-- **Experiment Tracking:** MLflow
-- **Pipeline and Data Versioning:** DVC
-- **Containerization:** Docker and Docker Compose
-- **Testing:** pytest
+| Component | Responsibility |
+|---|---|
+| NLP | Conversational intent classification |
+| FastAPI | Application API |
+| MLflow | Experiment tracking, metrics and model registry |
+| DVC | Data and pipeline versioning |
+| Docker | Application containerization |
+| GitHub Actions | Automated testing and CI |
+| Evidently AI | Data drift monitoring |
 
-## Requirements
+## 3. Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Programming Language | Python 3.12 |
+| Machine Learning | Scikit-learn |
+| NLP | TF-IDF, Logistic Regression |
+| API | FastAPI, Uvicorn |
+| Agent Framework | LangGraph |
+| LLM Runtime | Ollama |
+| Embeddings | SentenceTransformers |
+| Vector Database | ChromaDB |
+| Experiment Tracking | MLflow |
+| Data Versioning | DVC |
+| Monitoring | Evidently AI |
+| Containerization | Docker, Docker Compose |
+| CI/CD | GitHub Actions |
+| Testing | Pytest |
+| Frontend | React |
+
+## 4. Project Structure
+
+```text
+agentic-rag-mlops/
+│
+├── app/
+│   ├── agents/
+│   ├── api/
+│   ├── mlops/
+│   │   └── evaluation_gate.py
+│   ├── rag/
+│   ├── services/
+│   └── main.py
+│
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── conversations/
+│
+├── models/
+│
+├── frontend/
+│
+├── scripts/
+│   ├── train_model.py
+│   ├── evaluate_evidently.py
+│   └── ...
+│
+├── reports/
+│
+├── tests/
+│   └── test_evaluation_gate.py
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── dvc.yaml
+├── dvc.lock
+├── Dockerfile
+├── compose.yaml
+├── requirements.txt
+└── README.md
+```
+
+## 5. Requirements
+
+Install the following:
 
 - Python 3.12
 - Git
-- Docker Desktop with the Docker engine running
-- Ollama installed on the host machine for local LLM inference
-- The `llama3:latest` model available in Ollama
+- Docker Desktop
+- Ollama
+- Required Ollama model (`llama3:latest` for the documented configuration)
 
-## Local Setup
+## 6. Local Setup
 
-### 1. Clone the repository
+### Clone the repository
 
-```bash
-git clone <your-repository-url>
-cd agentic-rag-mlops
+```powershell
+git clone https://github.com/Geethapramodha-bit/mlops-pro.git
+cd mlops-pro
 ```
 
-Replace `<your-repository-url>` with your actual repository URL.
-
-### 2. Create and activate a virtual environment
-
-On Windows PowerShell:
+### Create a virtual environment
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
-
-Use the project's main dependency file:
+### Install dependencies
 
 ```powershell
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-If your environment uses a different dependency-management workflow, follow the dependency instructions in the repository.
+### Configure the session secret
 
-### 4. Configure the session secret
+Create a local `.env` file containing a secure `BOTPLAYER_SESSION_SECRET`.
 
-The API requires `BOTPLAYER_SESSION_SECRET` to sign authentication sessions. Create a local `.env` file with a randomly generated secret (the value is written to the file and is not printed):
+Example generation command:
 
 ```powershell
-if (-not (Test-Path .env)) {
-    python -c "import secrets; from pathlib import Path; Path('.env').write_text('BOTPLAYER_SESSION_SECRET=' + secrets.token_urlsafe(32) + '\n', encoding='utf-8')"
-}
+python -c "import secrets; from pathlib import Path; Path('.env').write_text('BOTPLAYER_SESSION_SECRET=' + secrets.token_urlsafe(32) + '\n', encoding='utf-8')"
 ```
 
-Keep the `.env` file private; it is excluded from Git. `.env.example` lists the required variable without containing a secret. A secret supplied directly in the process environment takes precedence over the `.env` value.
+Do not commit the generated secret.
 
-### 5. Prepare the local LLM
+### Prepare Ollama
 
-Start Ollama and ensure the model is available:
+Start Ollama and make sure the required model is available:
 
 ```powershell
 ollama pull llama3:latest
+ollama list
 ```
 
-### 6. Start the API
+## 7. Run the Application
 
-From the repository root:
+From the project root:
 
 ```powershell
 uvicorn app.main:app --reload
 ```
 
-The API is available at:
+Application URLs:
 
-- API root: `http://localhost:8000/`
-- Health check: `http://localhost:8000/health`
-- Interactive API documentation: `http://localhost:8000/docs`
-- OpenAPI schema: `http://localhost:8000/openapi.json`
+| Resource | URL |
+|---|---|
+| API root | http://localhost:8000/ |
+| Health check | http://localhost:8000/health |
+| Swagger documentation | http://localhost:8000/docs |
+| OpenAPI schema | http://localhost:8000/openapi.json |
 
-## API Endpoints
+## 8. API Endpoints
 
-| Method | Endpoint | Purpose |
+| Method | Endpoint | Description |
 |---|---|---|
-| GET | `/` | Application root |
-| GET | `/health` | Health check |
-| POST | `/chat` | Support chatbot |
-| POST | `/feedback` | Record feedback |
-| POST | `/agentic-ai` | Agentic AI knowledge assistant |
+| GET | `/` | Application information |
+| GET | `/health` | API health check |
+| POST | `/chat` | Customer support chatbot |
+| POST | `/feedback` | Record user feedback |
+| POST | `/agentic-ai` | Agentic AI learning assistant |
 
-Use `/docs` to inspect the request schemas and try the endpoints interactively.
+Use Swagger UI at `/docs` to inspect request schemas and test the endpoints.
 
-## Running Tests
+## 9. Model Training and Evaluation
 
-Run the automated tests from the repository root:
+The intent-classification pipeline uses:
 
-```powershell
-python -m pytest -q
-```
+- TF-IDF for text feature extraction.
+- Logistic Regression for intent classification.
+- Train, validation and test datasets for evaluation.
+- Accuracy, precision, recall and F1-score for performance measurement.
 
-The latest recorded test run completed with **2 passed and 0 failed**, with one deprecation warning from the Starlette test client and AnyIO.
-
-## RAG Evaluation
-
-Run the retrieval evaluation as a Python module:
+Run model training from the repository root:
 
 ```powershell
-python -m scripts.evaluate_agentic_ai_retrieval
+python -m scripts.train_model
 ```
 
-The evaluation checks whether expected knowledge-base sources appear among the top three retrieved documents.
+### Evaluation Gate
 
-An additional answer evaluation can be run with:
+The evaluation gate checks whether the trained model meets minimum validation performance requirements.
+
+Current thresholds:
+
+- Validation accuracy: 0.85
+- Validation F1-score: 0.85
+
+The model must satisfy these conditions to pass the evaluation gate.
+
+### Recorded Model Results
+
+| Metric | Validation | Test |
+|---|---:|---:|
+| Accuracy | 0.8887 | 0.8938 |
+| Weighted Precision | 0.8970 | 0.8991 |
+| Weighted Recall | 0.8887 | 0.8938 |
+| Weighted F1-score | 0.8882 | 0.8928 |
+
+These are the recorded results from the current model training run.
+
+## 10. MLflow Experiment Tracking and Model Registry
+
+MLflow is used to track model experiments, parameters, metrics and model artifacts.
+
+The project uses an SQLite tracking backend:
+
+```text
+sqlite:///mlflow.db
+```
+
+Tracked metrics include:
+
+- Accuracy
+- Precision
+- Recall
+- F1-score
+
+A trained intent-classification model has also been registered in the MLflow Model Registry.
+
+Current registered model:
+
+```text
+Model: intent_classifier
+Version: 1
+Status: READY
+```
+
+### Open the MLflow UI
 
 ```powershell
-python -m scripts.evaluate_agentic_ai_answers
+mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 
-In the manual retrieval-distance check, three relevant questions returned best distances between approximately `0.60` and `0.66`. An unrelated question returned a distance of approximately `1.68`. These observations support testing the configured distance threshold of `1.0`, but the sample is too small to establish a generally optimal threshold.
+Open:
 
-## Docker Deployment
+http://localhost:5000
 
-The project includes a `Dockerfile`, `compose.yaml`, and `requirements-docker.txt`.
+## 11. DVC Data and Pipeline Versioning
 
-1. Ensure Docker Desktop is running.
-2. Confirm `.env.docker` exists and contains the required local runtime configuration.
-3. Confirm the Ollama model is available on the host.
-4. Build and start the service:
+DVC is used to track datasets and make pipeline execution reproducible.
+
+The training pipeline is defined in:
+
+```text
+dvc.yaml
+```
+
+Check pipeline status:
+
+```powershell
+dvc status
+```
+
+Reproduce the pipeline:
+
+```powershell
+dvc repro
+```
+
+DVC tracks the relevant dependencies, pipeline stages and model artifacts.
+
+A DVC remote must be configured separately before pushing versioned data to remote storage.
+
+## 12. Evidently AI Monitoring
+
+Evidently AI is used to monitor changes in conversation data.
+
+The monitoring workflow compares reference and current conversation datasets to identify potential data drift.
+
+Generate the report:
+
+```powershell
+python -m scripts.evaluate_evidently
+```
+
+Generated report:
+
+```text
+reports/evidently_report.html
+```
+
+Open the HTML report in a browser to inspect the monitoring results.
+
+**Note:** The current conversation dataset is relatively small. Drift findings should be interpreted as preliminary rather than statistically conclusive.
+
+## 13. Docker Containerization
+
+The project includes:
+
+- `Dockerfile`
+- `compose.yaml`
+- `requirements-docker.txt`
+- `.env.docker`
+
+Ensure Docker Desktop is running and the local runtime configuration is available.
+
+Build and start the API:
 
 ```powershell
 docker compose up --build -d
 ```
 
-5. Check the container status:
+Check containers:
 
 ```powershell
 docker compose ps
 ```
 
-6. Test the health endpoint:
+Test the API:
 
 ```powershell
 Invoke-RestMethod http://localhost:8000/health
 ```
 
-7. Stop the service when finished:
+Stop the container:
 
 ```powershell
 docker compose down
 ```
 
-**Deployment note:** The current Compose configuration uses a Windows-specific Hugging Face cache path and connects to Ollama on the host. Adjust these settings when deploying on another machine or operating system. The Docker image contains the application, model files, and data copied by the Dockerfile; the Compose file also mounts local data and the embedding-model cache.
+**Configuration note:** The current Compose configuration uses a host-specific Hugging Face cache mount and connects to Ollama through the host machine. Update these settings when running on another computer or operating system.
 
-## MLOps Components
+## 14. GitHub Actions CI
 
-The repository includes tooling for:
+GitHub Actions provides continuous integration for the project.
 
-- Training and evaluating a support-intent classifier.
-- Logging model metrics and experiments with MLflow.
-- Managing pipeline stages and data artifacts with DVC.
-- Building the Agentic AI retrieval knowledge base.
-- Evaluating retrieval behavior and generated answers.
+Workflow file:
 
-Check the individual scripts and `dvc.yaml` for the pipeline stages and the commands supported by the current repository.
+```text
+.github/workflows/ci.yml
+```
 
-## Limitations and Future Improvements
+The workflow:
 
-- Expand automated test coverage beyond the current two tests.
-- Evaluate retrieval precision, recall, and fallback behavior over a larger and more diverse question set.
-- Tune the ChromaDB distance threshold using a representative evaluation dataset.
-- Improve response formatting and add stronger handling for LLM service failures.
-- Make Docker cache paths configurable for other operating systems.
-- Separate development and production configuration.
-- Add CI automation for tests and deployment checks.
-- Document reproducible dataset preparation and model-building steps.
+1. Checks out the repository.
+2. Sets up Python 3.12.
+3. Installs CI dependencies.
+4. Runs automated tests using Pytest.
 
-## Security Notes
+It runs on configured pushes, pull requests and manual workflow dispatches.
 
-- Do not commit API keys, passwords, or other secrets.
-- Keep `.env.docker` and local environment files out of version control.
-- Do not commit conversation backups or sensitive user data.
-- Review generated reports and data files before publishing the repository.
+**Current CI status:** The workflow associated with commit `cbce8ed` on the `master` branch completed successfully.
 
-## Project Status
+The current workflow focuses on testing. Automated model retraining and automated deployment are not part of the implemented workflow.
 
-The application has been tested locally and in Docker. The current checks cover basic API behavior, retrieval and fallback examples, and the existing automated tests. Broader testing and deployment hardening remain necessary before treating the project as production-ready.
+## 15. Automated Testing
+
+Run the test suite:
+
+```powershell
+python -m pytest -q
+```
+
+Latest recorded local result:
+
+```text
+6 passed, 1 warning
+```
+
+The warning was a Starlette/AnyIO deprecation warning and did not cause test failure.
+
+## 16. Current Implementation Status
+
+| Component | Status |
+|---|---|
+| NLP intent classifier | Implemented |
+| Agentic RAG workflow | Implemented |
+| FastAPI endpoints | Tested |
+| MLflow experiment tracking | Implemented |
+| MLflow model registration | Verified |
+| DVC pipeline | Executed successfully |
+| Evaluation gate | Implemented and tested |
+| Docker configuration | Validated |
+| GitHub Actions CI | Passed for latest commit |
+| Evidently AI report | Generated |
+| Automated tests | 6 passed |
+
+## 17. Limitations and Future Improvements
+
+- Increase the size and diversity of conversation data for monitoring.
+- Configure remote DVC storage for shared dataset versioning.
+- Expand end-to-end testing across different chatbot intents and failure scenarios.
+- Improve retrieval quality through a larger evaluation dataset.
+- Make Docker configuration portable across operating systems.
+- Add automated model deployment and retraining only when required.
+- Improve production monitoring and model lifecycle management.
+
+## 18. Security Notes
+
+- Never commit API keys, passwords or session secrets.
+- Keep `.env` and other local environment files private.
+- Avoid committing conversation backups or sensitive user information.
+- Review generated reports and datasets before publishing.
+- Use secure configuration for production deployment.
+
+## 19. Repository
+
+GitHub:
+
+https://github.com/Geethapramodha-bit/mlops-pro
+
+Branch: `master`
+
+Latest documented commit:
+
+```text
+cbce8ed
+```
+
+---
+
+**Project:** Agentic RAG MLOps Chatbot
+
+**Focus:** NLP, Agentic AI, Model Lifecycle Management, Experiment Tracking, Data Versioning, CI and Monitoring.
