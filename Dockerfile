@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY requirements-docker.txt .
 RUN pip install --no-cache-dir -r requirements-docker.txt
+RUN pip install --no-cache-dir email-validator==2.3.0
 
 COPY app/ ./app/
 COPY models/ ./models/
