@@ -1,4 +1,5 @@
 
+import os
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
@@ -23,6 +24,9 @@ Base.metadata.create_all(bind=engine)
 COOKIE_NAME = "botplayer_session"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+COOKIE_SAMESITE = "none" if COOKIE_SECURE else "lax"
+
 
 class SignupRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
@@ -46,7 +50,10 @@ def get_current_user(
 
     user_id = get_session_user_id(token)
     if user_id is None:
-        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+        raise HTTPException(
+            status_code=401,
+            detail="Session expired. Please log in again."
+        )
 
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -65,10 +72,16 @@ def signup(
     email = str(payload.email).strip().lower()
 
     if len(name) < 2:
-        raise HTTPException(status_code=422, detail="Name must contain at least two characters.")
+        raise HTTPException(
+            status_code=422,
+            detail="Name must contain at least two characters."
+        )
 
     if len(payload.password.encode("utf-8")) > 72:
-        raise HTTPException(status_code=422, detail="Password is too long.")
+        raise HTTPException(
+            status_code=422,
+            detail="Password is too long."
+        )
 
     user = User(
         name=name,
@@ -77,19 +90,23 @@ def signup(
     )
 
     db.add(user)
+
     try:
         db.commit()
         db.refresh(user)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="An account with this email already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail="An account with this email already exists."
+        )
 
     response.set_cookie(
         key=COOKIE_NAME,
         value=create_session_token(user.id),
         httponly=True,
-        secure=False,  # Set True when deployed behind HTTPS.
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=COOKIE_MAX_AGE,
         path="/",
     )
@@ -109,14 +126,17 @@ def login(
     user = authenticate_user(db, str(payload.email), payload.password)
 
     if user is None:
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password."
+        )
 
     response.set_cookie(
         key=COOKIE_NAME,
         value=create_session_token(user.id),
         httponly=True,
-        secure=False,  # Set True when deployed behind HTTPS.
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=COOKIE_MAX_AGE,
         path="/",
     )
@@ -137,8 +157,9 @@ def logout(response: Response):
     response.delete_cookie(
         key=COOKIE_NAME,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         path="/",
     )
+
     return {"message": "Logged out successfully."}
