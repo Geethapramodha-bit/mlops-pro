@@ -1,12 +1,16 @@
-
+import os
 from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Store the database in the project's data directory.
+# Use the Render persistent disk when DATA_DIR is configured.
+# Otherwise, retain the local development data directory.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = Path(
+    os.getenv("DATA_DIR", str(PROJECT_ROOT / "data"))
+)
+
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = f"sqlite:///{(DATA_DIR / 'botplayer.db').as_posix()}"

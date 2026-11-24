@@ -8,3 +8,15 @@ mlruns/
 mlflow.db
 notebooks/
 reports/
+
+# Generated databases and local runtime data
+data/processed/
+data/conversations/
+
+# Secrets and local environment configuration
+.env
+.env.*
+!.env.example
+
+# Backup files
+*.bak

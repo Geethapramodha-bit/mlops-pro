@@ -1,8 +1,12 @@
 import csv
 import os
+from pathlib import Path
 from datetime import datetime
 
-CONVERSATION_PATH = "data/conversations/conversations.csv"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = Path(os.getenv("DATA_DIR", str(PROJECT_ROOT / "data")))
+CONVERSATION_PATH = DATA_DIR / "conversations" / "conversations.csv"
+CONVERSATION_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def get_next_conversation_id():

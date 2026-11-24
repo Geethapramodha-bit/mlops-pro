@@ -1,7 +1,14 @@
+import os
+from pathlib import Path
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-CHROMA_PATH = "data/processed/chroma_db"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CHROMA_PATH = os.getenv(
+    "CHROMA_PATH",
+    str(PROJECT_ROOT / "data" / "processed" / "chroma_db"),
+)
 
 
 class Retriever:
