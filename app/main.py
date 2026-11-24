@@ -1,4 +1,6 @@
 
+import os
+
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -24,12 +26,21 @@ from app.services.models import User
 app = FastAPI(title="Agentic RAG MLOps")
 
 
-# Allow the React frontend to communicate with FastAPI.
+# Allow configured frontend URLs to communicate with FastAPI.
+frontend_urls = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
+
+allowed_origins = [
+    url.strip().rstrip("/")
+    for url in frontend_urls.split(",")
+    if url.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
