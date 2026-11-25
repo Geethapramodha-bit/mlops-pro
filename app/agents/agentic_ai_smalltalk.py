@@ -43,4 +43,16 @@ def get_smalltalk_response(question: str) -> str | None:
         "see you": "See you later! Feel free to come back whenever you need help.",
     }
 
-    return responses.get(normalized)
+    # Check for exact matches first.
+    if normalized in responses:
+        return responses[normalized]
+
+    # Handle combined greetings.
+    for greeting in ("hello", "hi", "hey"):
+        if normalized.startswith(greeting):
+            remaining = normalized[len(greeting):].lstrip(" ,.!? ")
+
+            if remaining in responses:
+                return responses[remaining]
+
+    return None
